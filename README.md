@@ -1,1 +1,1 @@
-# pulmoscan-hackcanada frontend
+# Pulmoscan-hackcanada frontend
