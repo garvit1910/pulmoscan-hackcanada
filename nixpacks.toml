@@ -1,0 +1,9 @@
+# Railway / Nixpacks config — tells Railway this is a Python backend
+[phases.setup]
+nixPkgs = ["python312", "gcc"]
+
+[phases.install]
+cmds = ["pip install -r backend/requirements.txt"]
+
+[start]
+cmd = "uvicorn backend.server:app --host 0.0.0.0 --port ${PORT:-8000}"

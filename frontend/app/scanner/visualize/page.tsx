@@ -73,7 +73,7 @@ function VisualizeContent() {
       {/* 3D Viewer — fills below the top bar */}
       <div className="absolute inset-0 z-10 pt-28">
         {scanResult ? (
-          <LungViewer scanData={scanResult} />
+          <LungViewer scanData={scanResult} onFindingHover={() => {}} className="w-full h-full" />
         ) : (
           <div className="flex h-full items-center justify-center">
             <p className="font-mono text-sm text-retro-cream/30">

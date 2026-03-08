@@ -60,6 +60,7 @@ OUTPUT_DIR = os.environ.get(
     os.path.join(_PROJECT_ROOT, "ml", "output"),
 )
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+logger.info("PROJECT_ROOT=%s  OUTPUT_DIR=%s  OSIC_DATA_ROOT=%s", _PROJECT_ROOT, OUTPUT_DIR, OSIC_DATA_ROOT)
 
 
 # ---------------------------------------------------------------------------
@@ -99,15 +100,27 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "")
+
+_default_origins = [
+    "http://localhost:3000",
+    "http://localhost:3002",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+]
+if FRONTEND_URL:
+    _default_origins.append(FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3002", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
+    allow_origins=_default_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Serve generated NRRDs as static files at /assets/
-app.mount("/assets", StaticFiles(directory=OUTPUT_DIR), name="assets")
+app.mount("/assets", StaticFiles(directory=OUTPUT_DIR, check_dir=False), name="assets")
 
 
 # ---------------------------------------------------------------------------
