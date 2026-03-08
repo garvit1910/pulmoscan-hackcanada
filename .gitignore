@@ -16,3 +16,10 @@ ml/output/
 
 # macOS
 .DS_Store
+
+# Node dependencies (demo/ and any other subdirectory)
+node_modules/
+demo/dist/
+
+# Python packaging artifact
+pulmoscan.egg-info/
