@@ -1,7 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FileJson, RotateCcw, AlertTriangle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { FileJson, RotateCcw, AlertTriangle, Box } from 'lucide-react'
 import type { AnalysisResult, Patient } from './useScannerState'
 
 interface ScannerResultsProps {
@@ -17,6 +18,22 @@ export default function ScannerResults({
   analysisError,
   onReset,
 }: ScannerResultsProps) {
+  const router = useRouter()
+
+  const handleVisualize = () => {
+    if (!analysisResult) return
+    const params = new URLSearchParams({
+      prediction: analysisResult.prediction,
+      confidence: String(analysisResult.confidence),
+      severity: analysisResult.severity || 'Moderate',
+      patient: analysisResult.patient_id,
+    })
+    if (analysisResult.fvc_prediction) {
+      params.set('fvc', String(analysisResult.fvc_prediction))
+    }
+    router.push(`/scanner/visualize?${params.toString()}`)
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -78,6 +95,14 @@ export default function ScannerResults({
                 {JSON.stringify(analysisResult.details, null, 2)}
               </pre>
             </div>
+
+            <button
+              onClick={handleVisualize}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-[#E8506A] hover:bg-[#d44460] text-[#0a0a0a] font-pixel text-xs rounded-lg transition-colors shadow-[0_0_15px_rgba(232,80,106,0.3)] hover:shadow-[0_0_25px_rgba(232,80,106,0.5)]"
+            >
+              <Box size={16} />
+              Visualize in 3D
+            </button>
 
             <button
               onClick={onReset}
