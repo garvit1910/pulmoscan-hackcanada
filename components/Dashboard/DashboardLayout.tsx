@@ -163,39 +163,8 @@ export default function DashboardLayout() {
             <Activity size={16} />
             Recent System Activity
           </h3>
-          <div className="space-y-3">
-            {[
-              { time: '2 min ago', event: 'CT scan analysis completed', status: 'Fibrosis Detected', statusColor: '#EF4444', confidence: '94.2%' },
-              { time: '15 min ago', event: 'Breathing pattern analyzed', status: 'Normal', statusColor: '#4ADE80', confidence: '97.1%' },
-              { time: '1 hr ago', event: 'Model recalibration', status: 'Complete', statusColor: '#4ADE80', confidence: '—' },
-              { time: '2 hrs ago', event: 'CT scan analysis completed', status: 'COPD Indicators', statusColor: '#FCD34D', confidence: '88.5%' },
-              { time: '3 hrs ago', event: 'Batch processing (12 scans)', status: 'Complete', statusColor: '#4ADE80', confidence: '—' },
-            ].map((entry, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] text-zinc-600 font-mono w-16 shrink-0">{entry.time}</span>
-                  <span className="text-sm text-zinc-400">{entry.event}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  {entry.confidence !== '—' && (
-                    <span className="text-xs text-zinc-500 font-mono">{entry.confidence}</span>
-                  )}
-                  <span
-                    className="text-xs font-semibold px-2 py-0.5 rounded"
-                    style={{
-                      color: entry.statusColor,
-                      background: entry.statusColor + '15',
-                      border: `1px solid ${entry.statusColor}30`,
-                    }}
-                  >
-                    {entry.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className="py-4 text-center">
+            <p className="text-sm text-zinc-600 italic font-mono">No recent activity</p>
           </div>
         </motion.div>
       </motion.div>

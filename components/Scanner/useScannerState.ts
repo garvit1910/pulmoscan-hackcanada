@@ -11,13 +11,35 @@ export interface Patient {
   subset: string
 }
 
+export interface ScanFinding {
+  id: string
+  type: string
+  severity: string
+  confidence: number
+  center_world: number[]
+  size_mm: number
+  description: string
+}
+
+export interface ScanResult {
+  scan_id: string
+  patient: { id: string; age: number | null; sex: string | null }
+  scan_metadata: { modality: string; slice_count: number; voxel_spacing: number[] }
+  volumes: {
+    lung: { url: string; format: string }
+    pathology_mask: { url: string; format: string }
+    original_ct: { url: string; format: string }
+  }
+  findings: ScanFinding[]
+  summary: string
+}
+
 export interface AnalysisResult {
   patient_id: string
   prediction: string
   confidence: number
-  fvc_prediction?: number
   severity?: string
-  details: Record<string, unknown>
+  scan_result: ScanResult
   timestamp: string
 }
 
@@ -141,15 +163,6 @@ export function useScannerState() {
       setPatientsError(
         err instanceof Error ? err.message : 'Failed to fetch patients'
       )
-      // Seed with demo data on error so the UI is usable
-      setPatients([
-        { patient_id: 'ID00007637202177411956430', slice_count: 174, subset: 'train' },
-        { patient_id: 'ID00009637202177434476278', slice_count: 96, subset: 'train' },
-        { patient_id: 'ID00011637202177653955184', slice_count: 120, subset: 'train' },
-        { patient_id: 'ID00012637202177665765362', slice_count: 83, subset: 'test' },
-        { patient_id: 'ID00014637202177757139317', slice_count: 145, subset: 'train' },
-        { patient_id: 'ID00015637202177857890710', slice_count: 67, subset: 'test' },
-      ])
     } finally {
       setPatientsLoading(false)
     }
@@ -197,66 +210,46 @@ export function useScannerState() {
     })
 
     try {
-      const body: Record<string, unknown> = {}
+      const formData = new FormData()
       if (activeTab === 'patients' && selectedPatient) {
-        body.patient_id = selectedPatient.patient_id
+        formData.append('patient_id', selectedPatient.patient_id)
+      } else if (activeTab === 'upload' && uploadedFile) {
+        formData.append('file', uploadedFile)
       }
 
-      // Attempt real API call with tracked abort controller
       const controller = new AbortController()
       abortControllerRef.current = controller
-      const timeout = trackedTimeout(() => controller.abort(), 25000)
 
-      try {
-        const res = await fetch('http://localhost:8000/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        })
-        clearTimeout(timeout)
-        analyzeTimersRef.current = analyzeTimersRef.current.filter((t) => t !== timeout)
-
-        if (res.ok) {
-          const data = await res.json()
-          // Wait remaining time to show processing animation (min 10s total)
-          await new Promise<void>((r) => { trackedTimeout(r, 8000) })
-          setAnalysisResult({
-            patient_id: selectedPatient?.patient_id || 'uploaded_file',
-            prediction: data.prediction || 'Pulmonary Fibrosis Detected',
-            confidence: data.confidence || 0.94,
-            fvc_prediction: data.fvc_prediction,
-            severity: data.severity || 'Moderate',
-            details: data,
-            timestamp: new Date().toISOString(),
-          })
-          setIsAnalyzing(false)
-          return
-        }
-      } catch {
-        clearTimeout(timeout)
-        analyzeTimersRef.current = analyzeTimersRef.current.filter((t) => t !== timeout)
-        // API not available — fall through to mock
-      } finally {
+      const res = await fetch('http://localhost:8000/api/analyze', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      }).finally(() => {
         abortControllerRef.current = null
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(`Server error ${res.status}: ${text}`)
       }
 
-      // Mock fallback after ~12s
-      await new Promise<void>((r) => { trackedTimeout(r, 12000) })
+      const data: ScanResult = await res.json()
+      const findings = data.findings ?? []
+      const sortedByConf = [...findings].sort((a, b) => b.confidence - a.confidence)
+      const topConf = sortedByConf[0]?.confidence ?? 0
+      const SEVERITY_ORDER = ['critical', 'high', 'moderate', 'low']
+      const mostSevere = findings.reduce<ScanFinding | null>((worst, f) => {
+        const wi = SEVERITY_ORDER.indexOf(worst?.severity ?? '')
+        const fi = SEVERITY_ORDER.indexOf(f.severity)
+        return fi !== -1 && (wi === -1 || fi < wi) ? f : worst
+      }, null)
+
       setAnalysisResult({
         patient_id: selectedPatient?.patient_id || 'uploaded_file',
-        prediction: 'Pulmonary Fibrosis Detected',
-        confidence: 0.94,
-        fvc_prediction: 2750,
-        severity: 'Moderate',
-        details: {
-          condition: 'Pulmonary Fibrosis',
-          probability: 0.94,
-          fvc_baseline: 3100,
-          fvc_predicted: 2750,
-          decline_rate: '11.3%',
-          model: 'PulmoScan v2.1',
-        },
+        prediction: data.summary || 'Analysis complete',
+        confidence: topConf,
+        severity: mostSevere?.severity,
+        scan_result: data,
         timestamp: new Date().toISOString(),
       })
     } catch (err) {
@@ -266,7 +259,7 @@ export function useScannerState() {
     } finally {
       setIsAnalyzing(false)
     }
-  }, [activeTab, selectedPatient, uploadedFile, zoomLevel, closeFact, trackedTimeout, clearTrackedTimers])
+  }, [activeTab, selectedPatient, uploadedFile, zoomLevel, closeFact, clearTrackedTimers])
 
   const handleReset = useCallback(() => {
     // PROCESS REAPER — kill in-flight analysis

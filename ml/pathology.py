@@ -141,7 +141,8 @@ def _description(finding_type: str, lobe: str, size_mm: List[float],
 # Track A — Rule-based lesion detection
 # ---------------------------------------------------------------------------
 
-MIN_LESION_VOXELS = 14   # ~3mm sphere at 1mm isotropic spacing
+MIN_LESION_VOXELS = 500  # ~10mm sphere at 1mm isotropic — filters noise/vessels
+MAX_COMPONENTS = 50     # cap to avoid extremely long processing on large volumes
 
 def _track_a(
     volume_hu:   np.ndarray,
@@ -162,32 +163,54 @@ def _track_a(
     candidate_mask = inside_lung & denser_than_air
 
     labeled, n = scipy.ndimage.label(candidate_mask)
+    logger.info("Track A: scipy.ndimage.label found %d raw components", n)
     if n == 0:
         logger.info("Track A: no anomalous components found inside lung mask")
         return np.zeros(volume_shape, dtype=np.int32), []
+
+    # Use find_objects for efficient per-component slicing (avoids full-volume scan per ID)
+    slices = scipy.ndimage.find_objects(labeled)
+
+    # Pre-compute component sizes efficiently using bincount
+    flat_labels = labeled.ravel()
+    component_sizes = np.bincount(flat_labels, minlength=n + 1)  # index 0 = background
 
     path_label_map = np.zeros(volume_shape, dtype=np.int32)
     components = []
     label_counter = 1
 
-    for cid in range(1, n + 1):
-        comp_mask = labeled == cid
-        voxel_count = comp_mask.sum()
-        if voxel_count < MIN_LESION_VOXELS:
+    # Sort candidate IDs by voxel count descending, take top MAX_COMPONENTS that pass filter
+    candidates = [(cid, int(component_sizes[cid])) for cid in range(1, n + 1)
+                  if component_sizes[cid] >= MIN_LESION_VOXELS]
+    candidates.sort(key=lambda x: x[1], reverse=True)
+    candidates = candidates[:MAX_COMPONENTS]
+    logger.info("Track A: %d components pass min-voxel filter (processing top %d)",
+                len(candidates), min(len(candidates), MAX_COMPONENTS))
+
+    for cid, voxel_count in candidates:
+        sl = slices[cid - 1]  # find_objects is 0-indexed
+        if sl is None:
             continue
 
-        centroid = scipy.ndimage.center_of_mass(comp_mask)   # (z, y, x)
-        size_mm  = _bbox_size_mm(comp_mask, spacing_xyz)
-        mean_hu  = float(volume_hu[comp_mask].mean())
+        # Work within the bounding box for efficiency
+        local_mask = labeled[sl] == cid
+        centroid_local = scipy.ndimage.center_of_mass(local_mask)
+        # Translate local centroid to global coords
+        centroid = tuple(
+            float(centroid_local[dim]) + sl[dim].start
+            for dim in range(3)
+        )
 
-        path_label_map[comp_mask] = label_counter
+        size_mm  = _bbox_size_mm(local_mask, spacing_xyz)
+        mean_hu  = float(volume_hu[sl][local_mask].mean())
+
+        path_label_map[sl][local_mask] = label_counter
         components.append({
-            "label_id":   label_counter,
+            "label_id":    label_counter,
             "centroid_zyx": centroid,
-            "size_mm":    size_mm,
-            "mean_hu":    mean_hu,
-            "voxel_count": int(voxel_count),
-            "comp_mask":  comp_mask,
+            "size_mm":     size_mm,
+            "mean_hu":     mean_hu,
+            "voxel_count": voxel_count,
         })
         label_counter += 1
 
@@ -210,6 +233,7 @@ def _track_b(
 
     Only updates components whose centroid slice fires non-normal.
     """
+    import time
     import torch
     from ml.classifier import (
         LungCancerClassifier, GradCAM,
@@ -220,13 +244,24 @@ def _track_b(
         logger.info("Track B: no checkpoint at %s — skipping", checkpoint_path)
         return {}
 
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    device = torch.device("cpu")  # MPS hangs on GradCAM backward pass (gradient hooks)
     model, idx_to_class = load_checkpoint(checkpoint_path, device)
     gradcam = GradCAM(model, device)
 
     boost_map = {}
+    TRACK_B_TIMEOUT = 60  # seconds — cap Track B to avoid very long processing
+    start_time = time.time()
 
-    for comp in components:
+    top_components = sorted(components, key=lambda c: c["voxel_count"], reverse=True)[:10]
+    logger.info("Track B: processing %d components (timeout=%ds)", len(top_components), TRACK_B_TIMEOUT)
+    for comp in top_components:
+        if time.time() - start_time > TRACK_B_TIMEOUT:
+            logger.warning("Track B: timeout reached after %ds, stopping early", TRACK_B_TIMEOUT)
+            break
+
+        z_idx = int(round(comp["centroid_zyx"][0]))
+        z_idx = max(0, min(z_idx, volume_hu.shape[0] - 1))
+        pil_slice = hu_slice_to_pil(volume_hu[z_idx])
         z_idx = int(round(comp["centroid_zyx"][0]))
         z_idx = max(0, min(z_idx, volume_hu.shape[0] - 1))
         pil_slice = hu_slice_to_pil(volume_hu[z_idx])
@@ -302,7 +337,7 @@ def _build_findings(
             "label":       f"{finding_type.replace('_', ' ').title()} — {lobe.replace('_', ' ').title()}",
             "lobe":        lobe,
             "confidence":  round(confidence, 3),
-            "size_mm":     size_mm,
+            "size_mm":     max(size_mm),
             "center_ijk":  [round(centroid[0], 1), round(centroid[1], 1), round(centroid[2], 1)],
             "center_world": cw,
             "severity":    severity,

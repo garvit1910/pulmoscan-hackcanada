@@ -22,15 +22,13 @@ export default function ScannerResults({
 
   const handleVisualize = () => {
     if (!analysisResult) return
+    sessionStorage.setItem('scan_result', JSON.stringify(analysisResult.scan_result))
     const params = new URLSearchParams({
       prediction: analysisResult.prediction,
       confidence: String(analysisResult.confidence),
-      severity: analysisResult.severity || 'Moderate',
+      severity: analysisResult.severity || '',
       patient: analysisResult.patient_id,
     })
-    if (analysisResult.fvc_prediction) {
-      params.set('fvc', String(analysisResult.fvc_prediction))
-    }
     router.push(`/scanner/visualize?${params.toString()}`)
   }
 
@@ -79,20 +77,13 @@ export default function ScannerResults({
                   </p>
                 </div>
               )}
-              {analysisResult.fvc_prediction && (
-                <div className="bg-black/30 rounded-lg p-3 border border-white/5">
-                  <p className="text-xs text-zinc-500">FVC Predicted</p>
-                  <p className="text-electric-blue font-semibold text-sm mt-1">
-                    {analysisResult.fvc_prediction} mL
-                  </p>
-                </div>
-              )}
+
             </div>
 
             {/* Raw JSON */}
             <div className="bg-black/40 rounded-lg p-3 border border-white/5">
               <pre className="text-xs text-zinc-400 overflow-auto max-h-48 font-mono">
-                {JSON.stringify(analysisResult.details, null, 2)}
+                {JSON.stringify(analysisResult.scan_result, null, 2)}
               </pre>
             </div>
 

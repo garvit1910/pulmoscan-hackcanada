@@ -102,7 +102,7 @@ export default function PatientPicker({
             {/* Error banner */}
             {patientsError && (
               <div className="mb-3 text-xs text-amber-400/80 bg-amber-900/20 border border-amber-900/30 rounded-lg p-2">
-                API unavailable — showing demo patients
+                {patientsError}
               </div>
             )}
 

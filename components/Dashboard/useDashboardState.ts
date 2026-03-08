@@ -61,26 +61,9 @@ export function useDashboardState() {
       ease: [0.6, 0.01, 0.05, 0.95],
     })
 
-    // After 3s: set mock prediction result
-    predictTimerRef.current = setTimeout(() => {
-      predictTimerRef.current = null
-
-      const mockResult: PredictionResult = {
-        prediction: 'Pulmonary Fibrosis Detected',
-        confidence: 0.94,
-        details: [
-          { condition: 'Pulmonary Fibrosis', probability: 0.94 },
-          { condition: 'COPD', probability: 0.03 },
-          { condition: 'Pneumonia', probability: 0.02 },
-          { condition: 'Healthy', probability: 0.01 },
-        ],
-        timestamp: new Date().toISOString(),
-        inputType: uploadedFile ? 'file_upload' : 'breathing_pattern',
-      }
-
-      setPredictionResult(mockResult)
-      setIsPredicting(false)
-    }, 3000)
+    // No backend endpoint for breathing pattern analysis yet
+    setError('Breathing pattern analysis is not yet connected to a backend endpoint.')
+    setIsPredicting(false)
   }, [breathingData, uploadedFile, zoomLevel, closeFact])
 
   const handleReset = useCallback(() => {

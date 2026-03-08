@@ -62,7 +62,7 @@ def export_nrrd(volume: np.ndarray, spacing_xyz: list, origin_xyz: list, filepat
             [0.0, 0.0, sz],
         ],
         "space origin": [float(origin_xyz[0]), float(origin_xyz[1]), float(origin_xyz[2])],
-        "encoding": "gzip",
+        "encoding": "raw",
         "endian": "little",
     }
 
@@ -184,7 +184,6 @@ def _segment_lungs_impl(volume_hu: np.ndarray) -> np.ndarray:
 
     # Step 5: morphological closing per label
     struct = scipy.ndimage.generate_binary_structure(3, 1)
-    struct = scipy.ndimage.iterate_structure(struct, 4)
     closed_map = np.zeros_like(lung_label_map)
     for lv in [1, 2]:
         comp = lung_label_map == lv
