@@ -54,7 +54,10 @@ export function useScannerState() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
 
+  // PROCESS REAPER — refs for all async handles
   const messageIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const analyzeTimersRef = useRef<NodeJS.Timeout[]>([])
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // Immediately dismiss the fact/quote overlay
   const closeFact = useCallback(() => {
@@ -93,6 +96,38 @@ export function useScannerState() {
       }
     }
   }, [isAnalyzing])
+
+  // PROCESS REAPER — cleanup ALL async handles on unmount
+  useEffect(() => {
+    return () => {
+      if (messageIntervalRef.current) {
+        clearInterval(messageIntervalRef.current)
+        messageIntervalRef.current = null
+      }
+      for (const t of analyzeTimersRef.current) clearTimeout(t)
+      analyzeTimersRef.current = []
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+        abortControllerRef.current = null
+      }
+    }
+  }, [])
+
+  // Helper: register a tracked timer
+  const trackedTimeout = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      analyzeTimersRef.current = analyzeTimersRef.current.filter((t) => t !== id)
+      fn()
+    }, ms)
+    analyzeTimersRef.current.push(id)
+    return id
+  }, [])
+
+  // Helper: clear all tracked timers
+  const clearTrackedTimers = useCallback(() => {
+    for (const t of analyzeTimersRef.current) clearTimeout(t)
+    analyzeTimersRef.current = []
+  }, [])
 
   const fetchPatients = useCallback(async () => {
     setPatientsLoading(true)
@@ -145,6 +180,12 @@ export function useScannerState() {
       return
     }
 
+    // PROCESS REAPER — kill any in-flight analysis
+    clearTrackedTimers()
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
     setAnalysisError(null)
     setIsAnalyzing(true)
     setAnalysisResult(null)
@@ -161,9 +202,10 @@ export function useScannerState() {
         body.patient_id = selectedPatient.patient_id
       }
 
-      // Attempt real API call
+      // Attempt real API call with tracked abort controller
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 25000)
+      abortControllerRef.current = controller
+      const timeout = trackedTimeout(() => controller.abort(), 25000)
 
       try {
         const res = await fetch('http://localhost:8000/api/analyze', {
@@ -173,11 +215,12 @@ export function useScannerState() {
           signal: controller.signal,
         })
         clearTimeout(timeout)
+        analyzeTimersRef.current = analyzeTimersRef.current.filter((t) => t !== timeout)
 
         if (res.ok) {
           const data = await res.json()
           // Wait remaining time to show processing animation (min 10s total)
-          await new Promise((r) => setTimeout(r, 8000))
+          await new Promise<void>((r) => { trackedTimeout(r, 8000) })
           setAnalysisResult({
             patient_id: selectedPatient?.patient_id || 'uploaded_file',
             prediction: data.prediction || 'Pulmonary Fibrosis Detected',
@@ -192,11 +235,14 @@ export function useScannerState() {
         }
       } catch {
         clearTimeout(timeout)
+        analyzeTimersRef.current = analyzeTimersRef.current.filter((t) => t !== timeout)
         // API not available — fall through to mock
+      } finally {
+        abortControllerRef.current = null
       }
 
       // Mock fallback after ~12s
-      await new Promise((r) => setTimeout(r, 12000))
+      await new Promise<void>((r) => { trackedTimeout(r, 12000) })
       setAnalysisResult({
         patient_id: selectedPatient?.patient_id || 'uploaded_file',
         prediction: 'Pulmonary Fibrosis Detected',
@@ -220,16 +266,22 @@ export function useScannerState() {
     } finally {
       setIsAnalyzing(false)
     }
-  }, [activeTab, selectedPatient, uploadedFile, zoomLevel, closeFact])
+  }, [activeTab, selectedPatient, uploadedFile, zoomLevel, closeFact, trackedTimeout, clearTrackedTimers])
 
   const handleReset = useCallback(() => {
+    // PROCESS REAPER — kill in-flight analysis
+    clearTrackedTimers()
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
     closeFact()
     setSelectedPatient(null)
     setUploadedFile(null)
     setAnalysisResult(null)
     setAnalysisError(null)
     setIsAnalyzing(false)
-  }, [closeFact])
+  }, [closeFact, clearTrackedTimers])
 
   return {
     // Motion values

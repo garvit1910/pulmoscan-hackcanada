@@ -4,462 +4,439 @@ import { useEffect, useRef, useCallback } from 'react'
 import { type MotionValue } from 'framer-motion'
 
 /**
- * usePulmonaryWeb3D — The core 3D canvas hook.
- * Renders a recursive 3D network of connections and data particles
- * on a 2D canvas using manual 3D math (rotation matrices + perspective projection).
- * 
- * ~500 lines. All animation via requestAnimationFrame.
+ * usePulmonaryWeb3D — Anatomical Alveolar 3D Canvas Hook
+ *
+ * Renders an anatomically-inspired alveolar cluster mesh:
+ *  - Hub Nodes (bronchiole endpoints): 6 large anchor points
+ *  - Alveoli Nodes: 20-30 per hub, tight organic grape-like clusters
+ *  - Nodule Nodes: 3 pathology markers with solid fill + flicker
+ *  - Depth-based connection opacity (0.08 far → 0.5 near)
+ *  - Parallax zoom: clusters expand outward as zoomLevel rises
+ *  - Data particles flow along edges with peach glow
+ *
+ * PROCESS REAPER: Full cleanup on unmount — cancelAnimationFrame,
+ * removeEventListener, zero canvas, clear all arrays.
  */
 
-// Configuration object — exact values from reference
-const opts = {
-  range: 250,
-  baseConnections: 5,
-  addedConnections: 5,
-  baseSize: 9,
-  minSize: 0.25,
-  dataToConnectionSize: 0.33,
-  sizeMultiplier: 0.7,
-  allowedDist: 60,
-  baseDist: 99,
-  addedDist: 77,
-  connectionAttempts: 100,
-  dataToConnections: 0.5,
-  baseSpeed: 0.001,
-  addedSpeed: 0.099,
-  baseGlowSpeed: 0.1,
-  addedGlowSpeed: 0.4,
-  rotVelX: 0.003,
-  rotVelY: 0.002,
-  repaintColor: '#0a0a0a',
-  connectionColor: '#FF775E',
-  dataColor: '#FFFFFF',
-  wireframeWidth: 0.33,
-  depth: 300,
-  focalLength: 550,
+// ── Configuration ──────────────────────────────────────────────
+const CFG = {
+  // Camera
+  depth: 350,
+  focalLength: 600,
   vanishPoint: { x: 0, y: 0 },
+
+  // Rotation
+  rotVelX: 0.0015,
+  rotVelY: 0.001,
+
+  // Colors
+  bgColor: '#0a0a0a',
+  peachR: 255, peachG: 119, peachB: 94,   // #FF775E decomposed for rgba()
+
+  // Hubs (bronchiole endpoints)
+  hubCount: 6,
+  hubSpread: 180,
+  hubSize: 6,
+
+  // Alveoli clusters
+  alveoliPerHub: 25,
+  alveoliJitter: 5,
+  alveoliSpread: 65,
+  alveoliMinSize: 1.5,
+  alveoliMaxSize: 3.5,
+  alveoliConnectRadius: 0.5,   // fraction of alveoliSpread
+  alveoliConnectChance: 0.3,
+
+  // Nodules (pathology markers)
+  noduleCount: 3,
+  noduleSize: 8,
+  noduleFlickerSpeed: 0.05,
+
+  // Wireframe
+  wireframeWidth: 0.4,
+
+  // Depth-based opacity
+  minOpacity: 0.08,
+  maxOpacity: 0.5,
+  nearZ: 100,
+  farZ: 600,
+
+  // Data particles
+  particleCount: 40,
+  particleSpeed: 0.008,
+  particleSize: 1.5,
+  particleGlow: 8,
 }
 
-interface Screen {
-  x: number
-  y: number
-  z: number
-  scale: number
-  lastX?: number
-  lastY?: number
-  color?: string
-}
-
-interface Connection {
-  x: number
-  y: number
-  z: number
+// ── Types ──────────────────────────────────────────────────────
+interface Node3D {
+  baseX: number; baseY: number; baseZ: number
+  x: number; y: number; z: number
   size: number
-  screen: Screen
-  links: Connection[]
-  isEnd: boolean
-  glowSpeed: number
-  link: () => void
-  step: (tick: number, cosX: number, sinX: number, cosY: number, sinY: number) => void
-  draw: (ctx: CanvasRenderingContext2D) => void
-  setScreen: (tick: number, cosX: number, sinX: number, cosY: number, sinY: number) => void
+  type: 'hub' | 'alveolus' | 'nodule'
+  hubIndex: number
+  connections: number[]
+  sx: number; sy: number; sz: number
+  scale: number; opacity: number
+  flickerPhase: number
 }
 
-interface DataParticle {
-  x: number
-  y: number
-  z: number
-  size: number
-  screen: Screen
-  connection: Connection | null
-  nextConnection: Connection | null
-  proportion: number
-  speed: number
-  ox: number
-  oy: number
-  oz: number
-  os: number
-  nx: number
-  ny: number
-  nz: number
-  ns: number
-  dx: number
-  dy: number
-  dz: number
-  ds: number
-  reset: () => void
-  step: (tick: number, cosX: number, sinX: number, cosY: number, sinY: number) => void
-  draw: (ctx: CanvasRenderingContext2D) => void
-  setConnection: (c: Connection) => void
-  setScreen: (tick: number, cosX: number, sinX: number, cosY: number, sinY: number) => void
+interface Particle {
+  fromIdx: number; toIdx: number
+  progress: number; speed: number
+  sx: number; sy: number
+  scale: number; opacity: number
 }
 
-type Item = Connection | DataParticle
-
-function isDataParticle(item: Item): item is DataParticle {
-  return 'proportion' in item
-}
-
-export function usePulmonaryWeb3D(
-  zoomLevel: MotionValue<number>,
-) {
+// ── Hook ───────────────────────────────────────────────────────
+export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animFrameRef = useRef<number>(0)
+  const destroyedRef = useRef(false)
 
   const initAndAnimate = useCallback(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) return () => {}
 
     const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    if (!ctx) return () => {}
 
-    // --- Canvas sizing ---
+    destroyedRef.current = false
+
+    // ── Canvas sizing ────────────────────────────────────────
     function resize() {
-      if (!canvas) return
+      if (!canvas || destroyedRef.current) return
       const dpr = window.devicePixelRatio || 1
       canvas.width = window.innerWidth * dpr
       canvas.height = window.innerHeight * dpr
       canvas.style.width = `${window.innerWidth}px`
       canvas.style.height = `${window.innerHeight}px`
-      opts.vanishPoint.x = canvas.width / 2
-      opts.vanishPoint.y = canvas.height / 2
+      CFG.vanishPoint.x = canvas.width / 2
+      CFG.vanishPoint.y = canvas.height / 2
     }
 
     resize()
     window.addEventListener('resize', resize)
 
-    // --- All connections and data particles ---
-    const allConnections: Connection[] = []
-    const allData: DataParticle[] = []
-    const allItems: Item[] = []
+    // ── Helpers ──────────────────────────────────────────────
+    const rand = (lo: number, hi: number) => lo + Math.random() * (hi - lo)
 
-    let tick = 0
+    const { peachR: pR, peachG: pG, peachB: pB } = CFG
 
-    // --- Projection helper ---
-    function projectToScreen(
+    function rgba(r: number, g: number, b: number, a: number) {
+      return `rgba(${r},${g},${b},${a.toFixed(3)})`
+    }
+
+    // ── 3D → 2D projection with depth-opacity ───────────────
+    function project(
       x: number, y: number, z: number,
-      cosX: number, sinX: number, cosY: number, sinY: number
-    ): { sx: number; sy: number; sz: number; scale: number } {
-      // Rotate X
+      cosX: number, sinX: number, cosY: number, sinY: number,
+    ) {
       const y1 = y * cosX - z * sinX
       const z1 = z * cosX + y * sinX
-      // Rotate Y
       const z2 = z1 * cosY - x * sinY
       const x1 = x * cosY + z1 * sinY
-
-      const zFinal = z2 + opts.depth
-      const scale = opts.focalLength / zFinal
+      const zF = z2 + CFG.depth
+      const sc = CFG.focalLength / Math.max(zF, 1)
+      const depthNorm = Math.max(0, Math.min(1,
+        (zF - CFG.nearZ) / (CFG.farZ - CFG.nearZ),
+      ))
       return {
-        sx: opts.vanishPoint.x + x1 * scale,
-        sy: opts.vanishPoint.y + y1 * scale,
-        sz: zFinal,
-        scale,
+        sx: CFG.vanishPoint.x + x1 * sc,
+        sy: CFG.vanishPoint.y + y1 * sc,
+        sz: zF,
+        scale: sc,
+        opacity: CFG.maxOpacity - depthNorm * (CFG.maxOpacity - CFG.minOpacity),
       }
     }
 
-    // --- Connection factory ---
-    function createConnection(x: number, y: number, z: number, size: number): Connection {
-      const conn: Connection = {
-        x,
-        y,
-        z,
-        size,
-        screen: { x: 0, y: 0, z: 0, scale: 0 },
-        links: [],
-        isEnd: false,
-        glowSpeed: opts.baseGlowSpeed + Math.random() * opts.addedGlowSpeed,
+    // ── Build anatomical mesh ────────────────────────────────
+    const nodes: Node3D[] = []
+    const edges: [number, number][] = []
+    const particles: Particle[] = []
 
-        link() {
-          if (this.size < opts.minSize) {
-            this.isEnd = true
-            return
-          }
+    // 1. Hub nodes — bronchiole endpoints in a ring
+    for (let h = 0; h < CFG.hubCount; h++) {
+      const angle = (h / CFG.hubCount) * Math.PI * 2 + rand(-0.3, 0.3)
+      const r = CFG.hubSpread * rand(0.6, 1.0)
+      const x = r * Math.cos(angle)
+      const y = rand(-CFG.hubSpread * 0.5, CFG.hubSpread * 0.5)
+      const z = r * Math.sin(angle) * 0.6
 
-          const connectionsNum = Math.floor(opts.baseConnections + Math.random() * opts.addedConnections)
-          const candidates: { x: number; y: number; z: number }[] = []
-
-          for (let i = 0; i < connectionsNum; i++) {
-            let placed = false
-
-            for (let attempt = 0; attempt < opts.connectionAttempts; attempt++) {
-              const alpha = Math.random() * Math.PI
-              const beta = Math.random() * Math.PI * 2
-              const len = opts.baseDist + Math.random() * opts.addedDist
-
-              const cx = this.x + len * Math.cos(alpha) * Math.sin(beta)
-              const cy = this.y + len * Math.sin(alpha) * Math.sin(beta)
-              const cz = this.z + len * Math.cos(beta)
-
-              // Constraint 1: within range of origin
-              if (cx * cx + cy * cy + cz * cz > opts.range * opts.range) continue
-
-              // Constraint 2: far enough from all existing connections
-              let tooClose = false
-              for (let j = 0; j < allConnections.length; j++) {
-                const ec = allConnections[j]
-                const ddx = cx - ec.x
-                const ddy = cy - ec.y
-                const ddz = cz - ec.z
-                if (ddx * ddx + ddy * ddy + ddz * ddz < opts.allowedDist * opts.allowedDist) {
-                  tooClose = true
-                  break
-                }
-              }
-              if (tooClose) continue
-
-              // Constraint 3: far enough from other candidates in this batch
-              let tooCloseCandidate = false
-              for (let j = 0; j < candidates.length; j++) {
-                const cc = candidates[j]
-                const ddx = cx - cc.x
-                const ddy = cy - cc.y
-                const ddz = cz - cc.z
-                if (ddx * ddx + ddy * ddy + ddz * ddz < opts.allowedDist * opts.allowedDist) {
-                  tooCloseCandidate = true
-                  break
-                }
-              }
-              if (tooCloseCandidate) continue
-
-              candidates.push({ x: cx, y: cy, z: cz })
-              placed = true
-              break
-            }
-
-            if (!placed) continue
-          }
-
-          if (candidates.length === 0) {
-            this.isEnd = true
-            return
-          }
-
-          for (const pos of candidates) {
-            const child = createConnection(pos.x, pos.y, pos.z, this.size * opts.sizeMultiplier)
-            this.links.push(child)
-            allConnections.push(child)
-            allItems.push(child)
-          }
-
-          for (const child of this.links) {
-            child.link()
-          }
-        },
-
-        step(t: number, cosX: number, sinX: number, cosY: number, sinY: number) {
-          this.setScreen(t, cosX, sinX, cosY, sinY)
-        },
-
-        draw(ctx: CanvasRenderingContext2D) {
-          if (this.screen.scale <= 0) return
-          const r = this.size * this.screen.scale
-          if (r < 0.1) return
-
-          ctx.beginPath()
-          ctx.arc(this.screen.x, this.screen.y, r, 0, Math.PI * 2)
-          ctx.fillStyle = this.screen.color || opts.connectionColor
-          ctx.fill()
-        },
-
-        setScreen(t: number, cosX: number, sinX: number, cosY: number, sinY: number) {
-          const proj = projectToScreen(this.x, this.y, this.z, cosX, sinX, cosY, sinY)
-          this.screen.lastX = this.screen.x
-          this.screen.lastY = this.screen.y
-          this.screen.x = proj.sx
-          this.screen.y = proj.sy
-          this.screen.z = proj.sz
-          this.screen.scale = proj.scale
-        },
-      }
-
-      return conn
+      nodes.push({
+        baseX: x, baseY: y, baseZ: z,
+        x, y, z,
+        size: CFG.hubSize,
+        type: 'hub',
+        hubIndex: h,
+        connections: [],
+        sx: 0, sy: 0, sz: 0,
+        scale: 0, opacity: 0,
+        flickerPhase: 0,
+      })
     }
 
-    // --- DataParticle factory ---
-    function createDataParticle(rootConnection: Connection): DataParticle {
-      const dp: DataParticle = {
-        x: 0, y: 0, z: 0,
-        size: 0,
-        screen: { x: 0, y: 0, z: 0, scale: 0 },
-        connection: null,
-        nextConnection: null,
-        proportion: 0,
-        speed: opts.baseSpeed + Math.random() * opts.addedSpeed,
-        ox: 0, oy: 0, oz: 0, os: 0,
-        nx: 0, ny: 0, nz: 0, ns: 0,
-        dx: 0, dy: 0, dz: 0, ds: 0,
-
-        reset() {
-          this.setConnection(rootConnection)
-        },
-
-        step(t: number, cosX: number, sinX: number, cosY: number, sinY: number) {
-          this.proportion += this.speed
-
-          if (this.proportion >= 1) {
-            if (this.nextConnection && !this.nextConnection.isEnd && this.nextConnection.links.length > 0) {
-              this.setConnection(this.nextConnection)
-            } else {
-              this.reset()
-            }
-          }
-
-          this.x = this.ox + this.dx * this.proportion
-          this.y = this.oy + this.dy * this.proportion
-          this.z = this.oz + this.dz * this.proportion
-          this.size = this.os + this.ds * this.proportion
-
-          this.setScreen(t, cosX, sinX, cosY, sinY)
-        },
-
-        draw(ctx: CanvasRenderingContext2D) {
-          if (!this.screen.lastX && !this.screen.lastY) return
-          const lw = this.size * this.screen.scale
-          if (lw < 0.1) return
-
-          ctx.beginPath()
-          ctx.moveTo(this.screen.lastX || this.screen.x, this.screen.lastY || this.screen.y)
-          ctx.lineTo(this.screen.x, this.screen.y)
-          ctx.lineWidth = lw
-          ctx.strokeStyle = '#ff9933'
-          ctx.shadowBlur = 15
-          ctx.shadowColor = '#ff6600'
-          ctx.stroke()
-          ctx.shadowBlur = 0
-          ctx.shadowColor = 'transparent'
-        },
-
-        setConnection(c: Connection) {
-          this.connection = c
-          if (c.links.length > 0) {
-            this.nextConnection = c.links[Math.floor(Math.random() * c.links.length)]
-          } else {
-            this.nextConnection = null
-          }
-
-          this.ox = c.x
-          this.oy = c.y
-          this.oz = c.z
-          this.os = c.size * opts.dataToConnectionSize
-
-          if (this.nextConnection) {
-            this.nx = this.nextConnection.x
-            this.ny = this.nextConnection.y
-            this.nz = this.nextConnection.z
-            this.ns = this.nextConnection.size * opts.dataToConnectionSize
-          } else {
-            this.nx = c.x
-            this.ny = c.y
-            this.nz = c.z
-            this.ns = c.size * opts.dataToConnectionSize
-          }
-
-          this.dx = this.nx - this.ox
-          this.dy = this.ny - this.oy
-          this.dz = this.nz - this.oz
-          this.ds = this.ns - this.os
-
-          this.proportion = 0
-        },
-
-        setScreen(t: number, cosX: number, sinX: number, cosY: number, sinY: number) {
-          const proj = projectToScreen(this.x, this.y, this.z, cosX, sinX, cosY, sinY)
-          this.screen.lastX = this.screen.x
-          this.screen.lastY = this.screen.y
-          this.screen.x = proj.sx
-          this.screen.y = proj.sy
-          this.screen.z = proj.sz
-          this.screen.scale = proj.scale
-        },
+    // 2. Connect hubs — nearest-2 backbone
+    for (let h = 0; h < CFG.hubCount; h++) {
+      const hub = nodes[h]
+      const ranked: { idx: number; d: number }[] = []
+      for (let j = 0; j < CFG.hubCount; j++) {
+        if (j === h) continue
+        const dx = hub.baseX - nodes[j].baseX
+        const dy = hub.baseY - nodes[j].baseY
+        const dz = hub.baseZ - nodes[j].baseZ
+        ranked.push({ idx: j, d: dx * dx + dy * dy + dz * dz })
       }
-
-      dp.reset()
-      return dp
+      ranked.sort((a, b) => a.d - b.d)
+      for (let c = 0; c < Math.min(2, ranked.length); c++) {
+        const j = ranked[c].idx
+        if (!hub.connections.includes(j)) hub.connections.push(j)
+        if (!nodes[j].connections.includes(h)) nodes[j].connections.push(h)
+      }
     }
 
-    // --- Build the recursive network ---
-    const rootConnection = createConnection(0, 0, 0, opts.baseSize)
-    allConnections.push(rootConnection)
-    allItems.push(rootConnection)
-    rootConnection.link()
+    // 3. Alveoli clusters — grape-like spherical clouds per hub
+    const hubEnd = nodes.length
+    for (let h = 0; h < hubEnd; h++) {
+      const hub = nodes[h]
+      const count = CFG.alveoliPerHub + Math.floor(rand(-CFG.alveoliJitter, CFG.alveoliJitter))
 
-    // --- Target data particle count ---
-    const targetDataCount = Math.floor(allConnections.length * opts.dataToConnections)
+      for (let a = 0; a < count; a++) {
+        const theta = Math.random() * Math.PI * 2
+        const phi = Math.acos(2 * Math.random() - 1)
+        const r = CFG.alveoliSpread * (0.3 + Math.random() * 0.7)
 
-    // --- Animation loop ---
+        const x = hub.baseX + r * Math.sin(phi) * Math.cos(theta)
+        const y = hub.baseY + r * Math.sin(phi) * Math.sin(theta)
+        const z = hub.baseZ + r * Math.cos(phi)
+
+        const idx = nodes.length
+        nodes.push({
+          baseX: x, baseY: y, baseZ: z,
+          x, y, z,
+          size: rand(CFG.alveoliMinSize, CFG.alveoliMaxSize),
+          type: 'alveolus',
+          hubIndex: h,
+          connections: [h],
+          sx: 0, sy: 0, sz: 0,
+          scale: 0, opacity: 0,
+          flickerPhase: 0,
+        })
+        hub.connections.push(idx)
+      }
+    }
+
+    // 4. Intra-cluster alveoli connections (sparse)
+    for (let i = hubEnd; i < nodes.length; i++) {
+      const ni = nodes[i]
+      if (ni.type !== 'alveolus') continue
+      for (let j = i + 1; j < nodes.length; j++) {
+        const nj = nodes[j]
+        if (nj.type !== 'alveolus' || nj.hubIndex !== ni.hubIndex) continue
+        const dx = ni.baseX - nj.baseX
+        const dy = ni.baseY - nj.baseY
+        const dz = ni.baseZ - nj.baseZ
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
+        if (dist < CFG.alveoliSpread * CFG.alveoliConnectRadius && Math.random() < CFG.alveoliConnectChance) {
+          if (!ni.connections.includes(j)) ni.connections.push(j)
+          if (!nj.connections.includes(i)) nj.connections.push(i)
+        }
+      }
+    }
+
+    // 5. Nodule nodes — pathology markers near random hubs
+    for (let n = 0; n < CFG.noduleCount; n++) {
+      const hIdx = Math.floor(Math.random() * hubEnd)
+      const hub = nodes[hIdx]
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.acos(2 * Math.random() - 1)
+      const r = CFG.alveoliSpread * 0.4
+
+      const x = hub.baseX + r * Math.sin(phi) * Math.cos(theta)
+      const y = hub.baseY + r * Math.sin(phi) * Math.sin(theta)
+      const z = hub.baseZ + r * Math.cos(phi)
+
+      const idx = nodes.length
+      nodes.push({
+        baseX: x, baseY: y, baseZ: z,
+        x, y, z,
+        size: CFG.noduleSize,
+        type: 'nodule',
+        hubIndex: hIdx,
+        connections: [hIdx],
+        sx: 0, sy: 0, sz: 0,
+        scale: 0, opacity: 0,
+        flickerPhase: Math.random() * Math.PI * 2,
+      })
+      hub.connections.push(idx)
+    }
+
+    // 6. Collect unique edges
+    for (let i = 0; i < nodes.length; i++) {
+      for (const j of nodes[i].connections) {
+        if (j > i) edges.push([i, j])
+      }
+    }
+
+    // 7. Spawn data particles on random edges
+    for (let p = 0; p < CFG.particleCount; p++) {
+      const e = edges[Math.floor(Math.random() * edges.length)]
+      particles.push({
+        fromIdx: e[0], toIdx: e[1],
+        progress: Math.random(),
+        speed: CFG.particleSpeed * (0.5 + Math.random()),
+        sx: 0, sy: 0, scale: 0, opacity: 0,
+      })
+    }
+
+    // ── Animation loop ───────────────────────────────────────
+    let tick = 0
+
     function loop() {
-      if (!ctx || !canvas) return
+      if (!ctx || !canvas || destroyedRef.current) return
 
-      // 1. Clear canvas
-      ctx.fillStyle = opts.repaintColor
+      ctx.fillStyle = CFG.bgColor
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      // 2. Increment tick
       tick++
+      const currentZoom = zoomLevel.get()
+      const zoomExpand = 1 + (currentZoom - 1) * 0.02
 
-      // 3. Recompute sin/cos for rotation
-      const rotX = tick * opts.rotVelX
-      const rotY = tick * opts.rotVelY
+      const rotX = tick * CFG.rotVelX
+      const rotY = tick * CFG.rotVelY
       const cosX = Math.cos(rotX)
       const sinX = Math.sin(rotX)
       const cosY = Math.cos(rotY)
       const sinY = Math.sin(rotY)
 
-      // 4. Conditionally spawn new particles (10% chance, up to target)
-      if (Math.random() < 0.1 && allData.length < targetDataCount) {
-        const dp = createDataParticle(rootConnection)
-        allData.push(dp)
-        allItems.push(dp)
+      // ── Project all nodes with parallax ────────────────────
+      for (const nd of nodes) {
+        nd.x = nd.baseX * zoomExpand
+        nd.y = nd.baseY * zoomExpand
+        nd.z = nd.baseZ * zoomExpand
+
+        const p = project(nd.x, nd.y, nd.z, cosX, sinX, cosY, sinY)
+        nd.sx = p.sx; nd.sy = p.sy; nd.sz = p.sz
+        nd.scale = p.scale; nd.opacity = p.opacity
       }
 
-      // 5. Begin wireframe path
-      ctx.lineWidth = opts.wireframeWidth
-      ctx.strokeStyle = opts.connectionColor
+      // ── Draw connections — depth-based opacity ─────────────
+      ctx.lineWidth = CFG.wireframeWidth
+      for (const [i, j] of edges) {
+        const a = nodes[i], b = nodes[j]
+        const avgO = (a.opacity + b.opacity) / 2
+        ctx.beginPath()
+        ctx.moveTo(a.sx, a.sy)
+        ctx.lineTo(b.sx, b.sy)
+        ctx.strokeStyle = rgba(pR, pG, pB, avgO)
+        ctx.stroke()
+      }
 
-      // 6. Step all items, draw wireframe connections
-      ctx.beginPath()
-      for (const item of allItems) {
-        item.step(tick, cosX, sinX, cosY, sinY)
+      // ── Draw nodes — depth-sorted (painter's algorithm) ────
+      const sorted = nodes
+        .map((_, i) => i)
+        .sort((a, b) => nodes[b].sz - nodes[a].sz)
 
-        // Draw wireframe lines between connections
-        if (!isDataParticle(item)) {
-          const conn = item as Connection
-          for (const child of conn.links) {
-            ctx.moveTo(conn.screen.x, conn.screen.y)
-            ctx.lineTo(child.screen.x, child.screen.y)
-          }
+      for (const i of sorted) {
+        const nd = nodes[i]
+        if (nd.scale <= 0) continue
+        const r = nd.size * nd.scale
+        if (r < 0.1) continue
+
+        if (nd.type === 'nodule') {
+          // Solid fill + flicker
+          const fl = 0.6 + 0.4 * Math.sin(tick * CFG.noduleFlickerSpeed + nd.flickerPhase)
+          ctx.beginPath()
+          ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2)
+          ctx.fillStyle = rgba(pR, pG, pB, nd.opacity * fl)
+          ctx.fill()
+          // Outer glow ring
+          ctx.beginPath()
+          ctx.arc(nd.sx, nd.sy, r * 1.5, 0, Math.PI * 2)
+          ctx.strokeStyle = rgba(pR, pG, pB, nd.opacity * fl * 0.3)
+          ctx.lineWidth = 1
+          ctx.stroke()
+          ctx.lineWidth = CFG.wireframeWidth
+        } else if (nd.type === 'hub') {
+          ctx.beginPath()
+          ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2)
+          ctx.fillStyle = rgba(pR, pG, pB, nd.opacity * 0.8)
+          ctx.fill()
+        } else {
+          ctx.beginPath()
+          ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2)
+          ctx.fillStyle = rgba(pR, pG, pB, nd.opacity * 0.6)
+          ctx.fill()
         }
       }
 
-      // 7. Stroke the wireframe batch
-      ctx.stroke()
+      // ── Data particles ─────────────────────────────────────
+      for (const pt of particles) {
+        pt.progress += pt.speed
+        if (pt.progress >= 1) {
+          const fromNd = nodes[pt.toIdx]
+          if (fromNd.connections.length > 0) {
+            pt.fromIdx = pt.toIdx
+            pt.toIdx = fromNd.connections[Math.floor(Math.random() * fromNd.connections.length)]
+          } else {
+            const e = edges[Math.floor(Math.random() * edges.length)]
+            pt.fromIdx = e[0]; pt.toIdx = e[1]
+          }
+          pt.progress = 0
+        }
 
-      // 8. Sort all items by screen.z (depth sort — painter's algorithm)
-      allItems.sort((a, b) => b.screen.z - a.screen.z)
+        const f = nodes[pt.fromIdx], t = nodes[pt.toIdx]
+        const px = f.x + (t.x - f.x) * pt.progress
+        const py = f.y + (t.y - f.y) * pt.progress
+        const pz = f.z + (t.z - f.z) * pt.progress
 
-      // 9. Draw all items
-      for (const item of allItems) {
-        item.draw(ctx)
+        const pp = project(px, py, pz, cosX, sinX, cosY, sinY)
+        pt.sx = pp.sx; pt.sy = pp.sy
+        pt.scale = pp.scale; pt.opacity = pp.opacity
+
+        const pr = CFG.particleSize * pp.scale
+        if (pr < 0.1) continue
+
+        ctx.beginPath()
+        ctx.arc(pt.sx, pt.sy, pr, 0, Math.PI * 2)
+        ctx.fillStyle = rgba(255, 255, 255, pt.opacity * 0.8)
+        ctx.shadowBlur = CFG.particleGlow
+        ctx.shadowColor = rgba(pR, pG, pB, pt.opacity * 0.5)
+        ctx.fill()
       }
 
-      // 10. Fade overlay when zoomLevel > 30
-      const currentZoom = zoomLevel.get()
+      // Reset shadow state
+      ctx.shadowBlur = 0
+      ctx.shadowColor = 'transparent'
+
+      // ── Fade overlay when zoomLevel > 30 ───────────────────
       if (currentZoom > 30) {
         const fadeAlpha = Math.min((currentZoom - 30) / 20, 0.8)
-        ctx.fillStyle = `rgba(0, 0, 0, ${fadeAlpha})`
+        ctx.fillStyle = `rgba(10,10,10,${fadeAlpha})`
         ctx.fillRect(0, 0, canvas.width, canvas.height)
       }
 
-      // 11. Next frame
       animFrameRef.current = requestAnimationFrame(loop)
     }
 
     animFrameRef.current = requestAnimationFrame(loop)
 
-    // Cleanup
+    // ── PROCESS REAPER — strict cleanup ──────────────────────
     return () => {
-      window.removeEventListener('resize', resize)
+      destroyedRef.current = true
       cancelAnimationFrame(animFrameRef.current)
+      window.removeEventListener('resize', resize)
+
+      // Zero out canvas to free GPU memory
+      if (canvas) {
+        canvas.width = 0
+        canvas.height = 0
+      }
+
+      // Purge arrays
+      nodes.length = 0
+      edges.length = 0
+      particles.length = 0
     }
   }, [zoomLevel])
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useMotionValue, useTransform, animate } from 'framer-motion'
 import type { BreathingPoint, PredictionResult } from './types'
 
@@ -14,6 +14,9 @@ export function useDashboardState() {
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null)
   const [isPredicting, setIsPredicting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // PROCESS REAPER — track pending timers for cleanup
+  const predictTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Immediately dismiss the fact/quote overlay
   const closeFact = useCallback(() => {
@@ -43,6 +46,12 @@ export function useDashboardState() {
       return
     }
 
+    // Clear any pending prediction timer
+    if (predictTimerRef.current) {
+      clearTimeout(predictTimerRef.current)
+      predictTimerRef.current = null
+    }
+
     setError(null)
     setIsPredicting(true)
 
@@ -53,7 +62,9 @@ export function useDashboardState() {
     })
 
     // After 3s: set mock prediction result
-    setTimeout(() => {
+    predictTimerRef.current = setTimeout(() => {
+      predictTimerRef.current = null
+
       const mockResult: PredictionResult = {
         prediction: 'Pulmonary Fibrosis Detected',
         confidence: 0.94,
@@ -73,6 +84,11 @@ export function useDashboardState() {
   }, [breathingData, uploadedFile, zoomLevel, closeFact])
 
   const handleReset = useCallback(() => {
+    // Kill pending prediction timer
+    if (predictTimerRef.current) {
+      clearTimeout(predictTimerRef.current)
+      predictTimerRef.current = null
+    }
     closeFact()
     setBreathingData([])
     setUploadedFile(null)
@@ -83,6 +99,16 @@ export function useDashboardState() {
 
   const handleClearBreathing = useCallback(() => {
     setBreathingData([])
+  }, [])
+
+  // PROCESS REAPER — cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (predictTimerRef.current) {
+        clearTimeout(predictTimerRef.current)
+        predictTimerRef.current = null
+      }
+    }
   }, [])
 
   return {
