@@ -9,15 +9,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'blood-red': '#b22222',
-        'crimson': '#dc143c',
-        'dark-red': '#8b0000',
-        'deep-black': '#0a0a0a',
-        'charcoal': '#121212',
-        'electric-blue': '#4da6ff',
+        /* ── Neo-Retro Coral palette ── */
+        'primary-coral': '#FF775E',
+        'dark-base': '#120D0B',
+        'retro-cream': '#FFF1E6',
+        /* keep legacy aliases mapped to coral so downstream components work */
+        'blood-red': '#FF775E',
+        'crimson': '#FF775E',
+        'dark-red': '#CC5F4B',
+        'deep-black': '#120D0B',
+        'charcoal': '#1A1210',
+        'electric-blue': '#FF775E',
       },
       fontFamily: {
-        sora: ['var(--font-sora)', 'sans-serif'],
+        pixel: ['var(--font-press-start)', 'monospace'],
+        mono: ['var(--font-vt323)', 'var(--font-jetbrains)', 'monospace'],
+        sora: ['var(--font-vt323)', 'var(--font-jetbrains)', 'monospace'],
       },
       animation: {
         'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
@@ -44,9 +51,14 @@ const config: Config = {
         },
       },
       boxShadow: {
-        'red-glow': '0 0 20px rgba(255, 0, 0, 0.5)',
-        'red-glow-lg': '0 0 40px rgba(255, 0, 0, 0.6)',
-        'crimson-glow': '0 0 20px rgba(220, 20, 60, 0.5)',
+        'pixel': '4px 4px 0px #000',
+        'pixel-sm': '2px 2px 0px #000',
+        'coral-glow': '0 0 20px rgba(255, 119, 94, 0.5)',
+        'coral-glow-lg': '0 0 40px rgba(255, 119, 94, 0.6)',
+        /* legacy aliases */
+        'red-glow': '0 0 20px rgba(255, 119, 94, 0.5)',
+        'red-glow-lg': '0 0 40px rgba(255, 119, 94, 0.6)',
+        'crimson-glow': '0 0 20px rgba(255, 119, 94, 0.5)',
       },
     },
   },

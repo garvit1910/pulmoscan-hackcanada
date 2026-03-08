@@ -12,7 +12,7 @@ export default function DashboardLayout() {
   const state = useDashboardState()
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] overflow-hidden relative">
+    <div className="min-h-screen w-full bg-dark-base overflow-hidden relative">
       {/* 3D Background */}
       <div className="absolute inset-0 z-0">
         <PulmonaryWeb3D

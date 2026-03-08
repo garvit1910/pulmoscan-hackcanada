@@ -27,7 +27,7 @@ export default function LungZoom({ className }: LungZoomProps) {
   }
 
   return (
-    <div className={`relative w-full h-screen bg-black mesh-bg-red overflow-hidden ${className || ''}`}>
+    <div className={`relative w-full h-screen bg-dark-base mesh-bg-red overflow-hidden ${className || ''}`}>
       {/* Corner title */}
       <div className="absolute top-8 left-8 z-20">
         <h2 className="text-2xl font-bold glow-text-red text-red-500">LungZoom</h2>

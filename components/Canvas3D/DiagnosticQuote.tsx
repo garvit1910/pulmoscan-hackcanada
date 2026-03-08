@@ -16,13 +16,13 @@ export default function DiagnosticQuote({ quoteOpacity }: DiagnosticQuoteProps) 
     >
       <motion.div
         style={{ scale }}
-        className="max-w-3xl p-12 rounded-2xl bg-black/90 backdrop-blur-md border border-purple-500/30 shadow-2xl"
+        className="max-w-3xl p-12 pixel-border"
       >
-        <p className="text-3xl font-light text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-orange-500 leading-relaxed">
+        <p className="text-2xl font-mono text-primary-coral glow-text-coral leading-relaxed">
           &ldquo;Early detection of pulmonary fibrosis can slow progression by up to 50%.
           Every breath analyzed is a step toward saving lives.&rdquo;
         </p>
-        <p className="mt-6 text-zinc-500 text-sm">
+        <p className="mt-6 text-retro-cream/40 text-sm font-mono">
           — Pulmonary Disease Research Foundation
         </p>
       </motion.div>

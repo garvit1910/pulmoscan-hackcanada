@@ -3,41 +3,119 @@
 @tailwind utilities;
 
 :root {
-  --neon-red: #ff0000;
-  --crimson: #dc143c;
-  --dark-red: #8b0000;
+  --coral: #FF775E;
+  --dark-base: #120D0B;
+  --retro-cream: #FFF1E6;
+  /* legacy vars mapped to coral */
+  --neon-red: #FF775E;
+  --crimson: #FF775E;
+  --dark-red: #CC5F4B;
 }
 
 body {
-  color: #e4e4e7;
-  background: #000000;
+  color: #FFF1E6;
+  background: #120D0B;
+}
+
+/* ── Scanline overlay ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
 }
 
 @layer utilities {
+  /* ── Pixel-border utility (replaces glassmorphism) ── */
+  .pixel-border {
+    border: 4px solid #FF775E;
+    box-shadow: 4px 4px 0px #000;
+    background: rgba(18, 13, 11, 0.85);
+  }
+
+  .pixel-border-sm {
+    border: 2px solid #FF775E;
+    box-shadow: 2px 2px 0px #000;
+    background: rgba(18, 13, 11, 0.85);
+  }
+
+  /* Chunky retro button */
+  .btn-retro {
+    border: 4px solid #FF775E;
+    box-shadow: 4px 4px 0px #000;
+    background: #FF775E;
+    color: #120D0B;
+    font-weight: 700;
+    transition: transform 0.05s, box-shadow 0.05s;
+    cursor: pointer;
+  }
+  .btn-retro:hover {
+    filter: brightness(1.1);
+  }
+  .btn-retro:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #000;
+  }
+
+  .btn-retro-outline {
+    border: 4px solid #FF775E;
+    box-shadow: 4px 4px 0px #000;
+    background: transparent;
+    color: #FF775E;
+    font-weight: 700;
+    transition: transform 0.05s, box-shadow 0.05s, background 0.15s;
+    cursor: pointer;
+  }
+  .btn-retro-outline:hover {
+    background: rgba(255, 119, 94, 0.1);
+  }
+  .btn-retro-outline:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #000;
+  }
+
+  .glow-text-coral {
+    text-shadow: 0 0 10px rgba(255,119,94,0.8), 0 0 20px rgba(255,119,94,0.5), 0 0 30px rgba(255,119,94,0.3);
+  }
+
+  /* legacy aliases */
   .glow-text-red {
-    text-shadow: 0 0 10px rgba(255,0,0,0.8), 0 0 20px rgba(255,0,0,0.5), 0 0 30px rgba(255,0,0,0.3);
+    text-shadow: 0 0 10px rgba(255,119,94,0.8), 0 0 20px rgba(255,119,94,0.5), 0 0 30px rgba(255,119,94,0.3);
   }
   .glow-text-crimson {
-    text-shadow: 0 0 10px rgba(220,20,60,0.8), 0 0 20px rgba(220,20,60,0.5), 0 0 30px rgba(220,20,60,0.3);
+    text-shadow: 0 0 10px rgba(255,119,94,0.8), 0 0 20px rgba(255,119,94,0.5), 0 0 30px rgba(255,119,94,0.3);
   }
+
+  /* glass-red → now pixel-based */
   .glass-red {
-    background: rgba(18, 18, 18, 0.6);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(139, 0, 0, 0.3);
+    border: 4px solid #FF775E;
+    box-shadow: 4px 4px 0px #000;
+    background: rgba(18, 13, 11, 0.85);
   }
+
   .mesh-bg-red {
     background:
-      radial-gradient(at 0% 0%, #000000 0%, transparent 50%),
-      radial-gradient(at 100% 0%, #0a0a0a 0%, transparent 50%),
-      radial-gradient(at 100% 100%, #8b0000 0%, transparent 50%),
-      radial-gradient(at 0% 100%, #000000 0%, transparent 50%);
+      radial-gradient(at 0% 0%, #120D0B 0%, transparent 50%),
+      radial-gradient(at 100% 0%, #1A1210 0%, transparent 50%),
+      radial-gradient(at 100% 100%, #FF775E 0%, transparent 50%),
+      radial-gradient(at 0% 100%, #120D0B 0%, transparent 50%);
     background-size: 200% 200%;
     animation: mesh-gradient 8s ease-in-out infinite;
   }
+
   .text-electric-blue {
-    color: #4da6ff;
+    color: #FF775E;
   }
+
   .bg-deep-space {
-    background: #050505;
+    background: #120D0B;
   }
 }
