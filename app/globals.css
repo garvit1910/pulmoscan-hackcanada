@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neon-red: #ff0000;
+  --crimson: #dc143c;
+  --dark-red: #8b0000;
+}
+
+body {
+  color: #e4e4e7;
+  background: #000000;
+}
+
+@layer utilities {
+  .glow-text-red {
+    text-shadow: 0 0 10px rgba(255,0,0,0.8), 0 0 20px rgba(255,0,0,0.5), 0 0 30px rgba(255,0,0,0.3);
+  }
+  .glow-text-crimson {
+    text-shadow: 0 0 10px rgba(220,20,60,0.8), 0 0 20px rgba(220,20,60,0.5), 0 0 30px rgba(220,20,60,0.3);
+  }
+  .glass-red {
+    background: rgba(18, 18, 18, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(139, 0, 0, 0.3);
+  }
+  .mesh-bg-red {
+    background:
+      radial-gradient(at 0% 0%, #000000 0%, transparent 50%),
+      radial-gradient(at 100% 0%, #0a0a0a 0%, transparent 50%),
+      radial-gradient(at 100% 100%, #8b0000 0%, transparent 50%),
+      radial-gradient(at 0% 100%, #000000 0%, transparent 50%);
+    background-size: 200% 200%;
+    animation: mesh-gradient 8s ease-in-out infinite;
+  }
+  .text-electric-blue {
+    color: #4da6ff;
+  }
+  .bg-deep-space {
+    background: #050505;
+  }
+}
