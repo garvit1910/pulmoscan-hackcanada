@@ -3,10 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --coral: #FF775E;
+  --canary: #FFEF00;
+  --peach: #FF775E;
   --dark-base: #120D0B;
   --retro-cream: #FFF1E6;
-  /* legacy vars mapped to coral */
+  /* legacy vars */
+  --coral: #FF775E;
   --neon-red: #FF775E;
   --crimson: #FF775E;
   --dark-red: #CC5F4B;
@@ -47,11 +49,11 @@ body::after {
     background: rgba(18, 13, 11, 0.85);
   }
 
-  /* Chunky retro button */
+  /* Chunky retro button — now Canary Yellow */
   .btn-retro {
-    border: 4px solid #FF775E;
+    border: 4px solid #FFEF00;
     box-shadow: 4px 4px 0px #000;
-    background: #FF775E;
+    background: #FFEF00;
     color: #120D0B;
     font-weight: 700;
     transition: transform 0.05s, box-shadow 0.05s;
@@ -66,16 +68,16 @@ body::after {
   }
 
   .btn-retro-outline {
-    border: 4px solid #FF775E;
+    border: 4px solid #FFEF00;
     box-shadow: 4px 4px 0px #000;
     background: transparent;
-    color: #FF775E;
+    color: #FFEF00;
     font-weight: 700;
     transition: transform 0.05s, box-shadow 0.05s, background 0.15s;
     cursor: pointer;
   }
   .btn-retro-outline:hover {
-    background: rgba(255, 119, 94, 0.1);
+    background: rgba(255, 239, 0, 0.1);
   }
   .btn-retro-outline:active {
     transform: translate(2px, 2px);
@@ -84,6 +86,10 @@ body::after {
 
   .glow-text-coral {
     text-shadow: 0 0 10px rgba(255,119,94,0.8), 0 0 20px rgba(255,119,94,0.5), 0 0 30px rgba(255,119,94,0.3);
+  }
+
+  .glow-text-canary {
+    text-shadow: 0 0 10px rgba(255,239,0,0.8), 0 0 20px rgba(255,239,0,0.5), 0 0 30px rgba(255,239,0,0.3);
   }
 
   /* legacy aliases */

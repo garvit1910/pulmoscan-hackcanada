@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import PulmonaryWeb3D from '@/components/Canvas3D/PulmonaryWeb3D'
+import DiagnosticQuote from '@/components/Canvas3D/DiagnosticQuote'
 import Navigation from '@/components/Dashboard/Navigation'
 import ScannerSidebar from './ScannerSidebar'
 import PatientPicker from './PatientPicker'
@@ -17,15 +18,17 @@ export default function ScannerLayout() {
     <div className="min-h-screen w-full bg-dark-base overflow-hidden relative">
       {/* 3D Background */}
       <div className="absolute inset-0 z-0">
-        <PulmonaryWeb3D
-          zoomLevel={state.zoomLevel}
-          quoteOpacity={state.quoteOpacity}
-          onQuoteClose={state.closeFact}
-        />
+        <PulmonaryWeb3D zoomLevel={state.zoomLevel} />
       </div>
 
       {/* Navigation */}
       <Navigation />
+
+      {/* Fact toast — rendered outside z-0 parent so z-50 works */}
+      <DiagnosticQuote
+        quoteOpacity={state.quoteOpacity}
+        closeFact={state.closeFact}
+      />
 
       {/* Scanner Grid — 3-6-3 layout */}
       <motion.div

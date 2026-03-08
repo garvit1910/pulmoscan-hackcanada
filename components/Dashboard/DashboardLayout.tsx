@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import PulmonaryWeb3D from '@/components/Canvas3D/PulmonaryWeb3D'
+import DiagnosticQuote from '@/components/Canvas3D/DiagnosticQuote'
 import Navigation from './Navigation'
 import LeftSidebar from './LeftSidebar'
 import CenterWorkspace from './CenterWorkspace'
@@ -15,15 +16,17 @@ export default function DashboardLayout() {
     <div className="min-h-screen w-full bg-dark-base overflow-hidden relative">
       {/* 3D Background */}
       <div className="absolute inset-0 z-0">
-        <PulmonaryWeb3D
-          zoomLevel={state.zoomLevel}
-          quoteOpacity={state.quoteOpacity}
-          onQuoteClose={state.closeFact}
-        />
+        <PulmonaryWeb3D zoomLevel={state.zoomLevel} />
       </div>
 
       {/* Navigation */}
       <Navigation />
+
+      {/* Fact toast — rendered outside z-0 parent so z-50 works */}
+      <DiagnosticQuote
+        quoteOpacity={state.quoteOpacity}
+        closeFact={state.closeFact}
+      />
 
       {/* Dashboard Grid */}
       <motion.div

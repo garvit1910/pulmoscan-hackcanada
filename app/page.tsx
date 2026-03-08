@@ -30,13 +30,12 @@ const features = [
 
 export default function Home() {
   const zoomLevel = useMotionValue(1)
-  const quoteOpacity = useMotionValue(0)
 
   return (
     <main className="min-h-[200vh] w-full bg-dark-base overflow-x-hidden relative">
       {/* 3D Background — fixed behind everything */}
       <div className="fixed inset-0 z-0">
-        <PulmonaryWeb3D zoomLevel={zoomLevel} quoteOpacity={quoteOpacity} />
+        <PulmonaryWeb3D zoomLevel={zoomLevel} />
       </div>
 
       {/* ═══════════ HERO SECTION ═══════════ */}

@@ -9,11 +9,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        /* ── Neo-Retro Coral palette ── */
+        /* ── Canary & Peach palette ── */
+        'canary': '#FFEF00',
+        'peach': '#FF775E',
         'primary-coral': '#FF775E',
         'dark-base': '#120D0B',
         'retro-cream': '#FFF1E6',
-        /* keep legacy aliases mapped to coral so downstream components work */
+        /* legacy aliases */
         'blood-red': '#FF775E',
         'crimson': '#FF775E',
         'dark-red': '#CC5F4B',
@@ -53,6 +55,8 @@ const config: Config = {
       boxShadow: {
         'pixel': '4px 4px 0px #000',
         'pixel-sm': '2px 2px 0px #000',
+        'canary-glow': '0 0 20px rgba(255, 239, 0, 0.5)',
+        'canary-glow-lg': '0 0 40px rgba(255, 239, 0, 0.6)',
         'coral-glow': '0 0 20px rgba(255, 119, 94, 0.5)',
         'coral-glow-lg': '0 0 40px rgba(255, 119, 94, 0.6)',
         /* legacy aliases */

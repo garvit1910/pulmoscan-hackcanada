@@ -98,7 +98,6 @@ const cardVariants = {
 
 export default function CitationsPage() {
   const zoomLevel = useMotionValue(5)
-  const quoteOpacity = useMotionValue(0)
 
   const [loading, setLoading] = useState(true)
   const [progress, setProgress] = useState(0)
@@ -125,7 +124,7 @@ export default function CitationsPage() {
     <div className="min-h-screen w-full bg-dark-base overflow-x-hidden relative">
       {/* 3D Background */}
       <div className="absolute inset-0 z-0 opacity-30">
-        <PulmonaryWeb3D zoomLevel={zoomLevel} quoteOpacity={quoteOpacity} />
+        <PulmonaryWeb3D zoomLevel={zoomLevel} />
       </div>
 
       {/* Navigation */}

@@ -22,10 +22,14 @@ export default function RetroLoadingBar({
 
   return (
     <div className="w-full max-w-md mx-auto text-center space-y-3">
-      {/* Header label */}
-      <p className="font-pixel text-[10px] text-[#FF775E] tracking-[0.25em]">
+      {/* Header label — canary yellow with flicker animation */}
+      <motion.p
+        animate={{ opacity: [1, 0.3, 1] }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+        className="font-pixel text-[10px] text-[#FFEF00] tracking-[0.25em]"
+      >
         {label}
-      </p>
+      </motion.p>
 
       {/* Optional message */}
       {message && (
@@ -34,7 +38,7 @@ export default function RetroLoadingBar({
         </p>
       )}
 
-      {/* Segmented bar */}
+      {/* Segmented bar — canary yellow fill */}
       <div className="flex gap-[3px] justify-center">
         {Array.from({ length: SEGMENTS }).map((_, i) => (
           <motion.div
@@ -43,7 +47,7 @@ export default function RetroLoadingBar({
             animate={{
               opacity: i < filled ? 1 : 0.15,
               scale: i < filled ? 1 : 0.8,
-              backgroundColor: i < filled ? '#FF775E' : '#2a2220',
+              backgroundColor: i < filled ? '#FFEF00' : '#2a2220',
             }}
             transition={{ duration: 0.15, delay: i * 0.02 }}
             className="w-3 h-5"
