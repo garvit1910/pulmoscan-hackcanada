@@ -19,7 +19,18 @@ body {
   background: #120D0B;
 }
 
-/* ── Scanline overlay ── */
+/* ── Dot-grid texture ── gives the void an engineered, dense feel */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* ── Scanline overlay ── vintage medical-monitor effect */
 body::after {
   content: '';
   position: fixed;
@@ -30,8 +41,8 @@ body::after {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.06) 2px,
-    rgba(0, 0, 0, 0.06) 4px
+    rgba(0, 0, 0, 0.07) 2px,
+    rgba(0, 0, 0, 0.07) 4px
   );
 }
 
@@ -49,11 +60,11 @@ body::after {
     background: rgba(18, 13, 11, 0.85);
   }
 
-  /* Chunky retro button — now Canary Yellow */
+  /* Chunky retro button — Peach (#FF775E) */
   .btn-retro {
-    border: 4px solid #FFEF00;
+    border: 4px solid #FF775E;
     box-shadow: 4px 4px 0px #000;
-    background: #FFEF00;
+    background: #FF775E;
     color: #120D0B;
     font-weight: 700;
     transition: transform 0.05s, box-shadow 0.05s;
@@ -68,16 +79,16 @@ body::after {
   }
 
   .btn-retro-outline {
-    border: 4px solid #FFEF00;
+    border: 4px solid #FF775E;
     box-shadow: 4px 4px 0px #000;
     background: transparent;
-    color: #FFEF00;
+    color: #FF775E;
     font-weight: 700;
     transition: transform 0.05s, box-shadow 0.05s, background 0.15s;
     cursor: pointer;
   }
   .btn-retro-outline:hover {
-    background: rgba(255, 239, 0, 0.1);
+    background: rgba(255, 119, 94, 0.1);
   }
   .btn-retro-outline:active {
     transform: translate(2px, 2px);
