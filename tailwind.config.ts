@@ -9,17 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        /* ── Canary & Peach palette ── */
-        'canary': '#FFEF00',
+        /* ── Peach palette ── */
         'peach': '#FF775E',
         'primary-coral': '#FF775E',
-        'dark-base': '#120D0B',
+        'dark-base': '#0a0a0a',
         'retro-cream': '#FFF1E6',
         /* legacy aliases */
         'blood-red': '#FF775E',
         'crimson': '#FF775E',
         'dark-red': '#CC5F4B',
-        'deep-black': '#120D0B',
+        'deep-black': '#0a0a0a',
         'charcoal': '#1A1210',
         'electric-blue': '#FF775E',
       },
@@ -55,8 +54,6 @@ const config: Config = {
       boxShadow: {
         'pixel': '4px 4px 0px #000',
         'pixel-sm': '2px 2px 0px #000',
-        'canary-glow': '0 0 20px rgba(255, 239, 0, 0.5)',
-        'canary-glow-lg': '0 0 40px rgba(255, 239, 0, 0.6)',
         'coral-glow': '0 0 20px rgba(255, 119, 94, 0.5)',
         'coral-glow-lg': '0 0 40px rgba(255, 119, 94, 0.6)',
         /* legacy aliases */

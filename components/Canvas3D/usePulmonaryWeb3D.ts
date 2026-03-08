@@ -31,7 +31,7 @@ const opts = {
   addedGlowSpeed: 0.4,
   rotVelX: 0.003,
   rotVelY: 0.002,
-  repaintColor: '#120D0B',
+  repaintColor: '#0a0a0a',
   connectionColor: '#FF775E',
   dataColor: '#FFFFFF',
   wireframeWidth: 0.33,

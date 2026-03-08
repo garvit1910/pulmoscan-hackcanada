@@ -45,16 +45,16 @@ export default function DiagnosticQuote({ quoteOpacity, closeFact }: DiagnosticQ
           transition={{ type: 'spring', stiffness: 120, damping: 18 }}
           className="fixed bottom-6 right-6 z-50 max-w-sm pointer-events-auto"
         >
-          <div className="relative rounded-none overflow-hidden border-4 border-[#FF775E] shadow-pixel bg-[#120D0B]/95">
-            {/* Canary yellow header bar */}
-            <div className="bg-[#FFEF00] px-4 py-2 flex items-center justify-between">
-              <p className="font-pixel text-[8px] text-[#120D0B] tracking-[0.2em]">
+          <div className="relative rounded-none overflow-hidden border-4 border-[#FF775E] shadow-pixel bg-[#0a0a0a]/95">
+            {/* Peach header bar */}
+            <div className="bg-[#FF775E] px-4 py-2 flex items-center justify-between">
+              <p className="font-pixel text-[8px] text-[#0a0a0a] tracking-[0.2em]">
                 PULMO-FACT
               </p>
-              {/* X button — canary yellow on dark, pointer-events-auto */}
+              {/* X button — peach bg, black X, pointer-events-auto */}
               <button
                 onClick={handleDismiss}
-                className="pointer-events-auto w-6 h-6 flex items-center justify-center bg-[#120D0B] text-[#FFEF00] hover:bg-[#FF775E] hover:text-[#120D0B] transition-colors rounded-none"
+                className="pointer-events-auto w-6 h-6 flex items-center justify-center bg-[#0a0a0a] text-[#FF775E] hover:bg-[#FF775E] hover:text-[#0a0a0a] border border-[#FF775E] transition-colors rounded-none"
               >
                 <X size={14} />
               </button>
@@ -71,12 +71,12 @@ export default function DiagnosticQuote({ quoteOpacity, closeFact }: DiagnosticQ
               </p>
             </div>
 
-            {/* Auto-dismiss progress bar — canary yellow */}
+            {/* Auto-dismiss progress bar — peach */}
             <motion.div
               initial={{ scaleX: 1 }}
               animate={{ scaleX: 0 }}
               transition={{ duration: 6, ease: 'linear' }}
-              className="h-[3px] bg-[#FFEF00] origin-left"
+              className="h-[3px] bg-[#FF775E] origin-left"
             />
           </div>
         </motion.div>
