@@ -40,7 +40,7 @@ export default function CenterWorkspace({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2, duration: 0.6 }}
-      className="glass-red rounded-2xl p-6 border border-white/10 space-y-6"
+      className="glass-red rounded-none p-6 border border-white/10 space-y-6"
     >
       {/* Breathing Pattern Test */}
       <div>

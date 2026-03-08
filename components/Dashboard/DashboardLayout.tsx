@@ -18,6 +18,7 @@ export default function DashboardLayout() {
         <PulmonaryWeb3D
           zoomLevel={state.zoomLevel}
           quoteOpacity={state.quoteOpacity}
+          onQuoteClose={state.closeFact}
         />
       </div>
 

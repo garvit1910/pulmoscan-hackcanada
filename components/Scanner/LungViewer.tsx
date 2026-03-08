@@ -1,7 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Activity, Loader2 } from 'lucide-react'
+import { Activity } from 'lucide-react'
+import RetroLoadingBar from '@/components/ui/RetroLoadingBar'
 
 interface LungViewerProps {
   isAnalyzing: boolean
@@ -14,8 +16,34 @@ export default function LungViewer({
   processingMessage,
   hasResult,
 }: LungViewerProps) {
+  // Smooth progress for the retro loading bar
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    if (!isAnalyzing) {
+      setProgress(0)
+      return
+    }
+    // Animate to ~90% over 12s, reaching 100% only when done
+    let step = 0
+    const maxSteps = 120
+    const timer = setInterval(() => {
+      step++
+      // Ease-out curve: fast start, slow toward 90%
+      const pct = 90 * (1 - Math.pow(1 - step / maxSteps, 2))
+      setProgress(Math.min(pct, 90))
+      if (step >= maxSteps) clearInterval(timer)
+    }, 100)
+
+    return () => clearInterval(timer)
+  }, [isAnalyzing])
+
+  // Jump to 100% when analysis completes
+  useEffect(() => {
+    if (hasResult && !isAnalyzing) setProgress(100)
+  }, [hasResult, isAnalyzing])
   return (
-    <div className="relative w-full aspect-square max-h-[400px] rounded-xl bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center">
+    <div className="relative w-full aspect-square max-h-[400px] rounded-none pixel-border overflow-hidden flex items-center justify-center">
       {/* Pulsating lung SVG */}
       <svg
         viewBox="0 0 400 400"
@@ -24,9 +52,9 @@ export default function LungViewer({
       >
         <defs>
           <radialGradient id="lv-lungGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#8b0000" stopOpacity="0.7" />
-            <stop offset="60%" stopColor="#b22222" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#000000" stopOpacity="1" />
+            <stop offset="0%" stopColor="#FF775E" stopOpacity="0.7" />
+            <stop offset="60%" stopColor="#CC5F4B" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#120D0B" stopOpacity="1" />
           </radialGradient>
           <filter id="lv-glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="6" result="blur" />
@@ -48,7 +76,7 @@ export default function LungViewer({
           <motion.path
             key={i}
             d={d}
-            stroke="#dc143c"
+            stroke="#FF775E"
             strokeWidth={2.5 - i * 0.3}
             fill="none"
             strokeLinecap="round"
@@ -69,7 +97,7 @@ export default function LungViewer({
         {/* Trachea */}
         <path
           d="M 200 60 C 200 90, 200 130, 200 160"
-          stroke="#b22222"
+          stroke="#CC5F4B"
           strokeWidth={3}
           fill="none"
           opacity={0.7}
@@ -81,7 +109,7 @@ export default function LungViewer({
           cy={200}
           r={70}
           fill="url(#lv-lungGrad)"
-          stroke="#dc143c"
+          stroke="#FF775E"
           strokeWidth={1.5}
           filter="url(#lv-glow)"
           animate={
@@ -103,29 +131,24 @@ export default function LungViewer({
           cy={200}
           r={20}
           fill="#000"
-          stroke="#ff0000"
+          stroke="#FF775E"
           strokeWidth={1}
           opacity={0.7}
         />
       </svg>
 
-      {/* Processing overlay */}
+      {/* Processing overlay with retro loading bar */}
       {isAnalyzing && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="absolute inset-0 flex flex-col items-center justify-center bg-dark-base/80"
         >
-          <Loader2 size={36} className="text-crimson animate-spin mb-4" />
-          <motion.p
-            key={processingMessage}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="text-sm text-zinc-300 font-medium"
-          >
-            {processingMessage}
-          </motion.p>
+          <RetroLoadingBar
+            progress={progress}
+            label="SCANNING"
+            message={processingMessage}
+          />
         </motion.div>
       )}
 
@@ -134,10 +157,10 @@ export default function LungViewer({
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-green-500/15 border border-green-500/30 rounded-full"
+          className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-primary-coral/15 border-2 border-primary-coral rounded-none shadow-pixel-sm"
         >
-          <Activity size={12} className="text-green-400" />
-          <span className="text-xs text-green-400 font-medium">
+          <Activity size={12} className="text-primary-coral" />
+          <span className="text-xs text-primary-coral font-mono">
             Analysis Complete
           </span>
         </motion.div>

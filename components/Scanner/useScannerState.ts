@@ -56,6 +56,14 @@ export function useScannerState() {
 
   const messageIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Immediately dismiss the fact/quote overlay
+  const closeFact = useCallback(() => {
+    animate(zoomLevel, 1, {
+      duration: 1.5,
+      ease: [0.6, 0.01, 0.05, 0.95],
+    })
+  }, [zoomLevel])
+
   // Fetch patients on mount
   useEffect(() => {
     fetchPatients()
@@ -125,6 +133,9 @@ export function useScannerState() {
   }, [])
 
   const handleAnalyze = useCallback(async () => {
+    // Always dismiss fact first
+    closeFact()
+
     if (activeTab === 'patients' && !selectedPatient) {
       setAnalysisError('Please select a patient first.')
       return
@@ -209,19 +220,16 @@ export function useScannerState() {
     } finally {
       setIsAnalyzing(false)
     }
-  }, [activeTab, selectedPatient, uploadedFile, zoomLevel])
+  }, [activeTab, selectedPatient, uploadedFile, zoomLevel, closeFact])
 
   const handleReset = useCallback(() => {
-    animate(zoomLevel, 1, {
-      duration: 2,
-      ease: [0.6, 0.01, 0.05, 0.95],
-    })
+    closeFact()
     setSelectedPatient(null)
     setUploadedFile(null)
     setAnalysisResult(null)
     setAnalysisError(null)
     setIsAnalyzing(false)
-  }, [zoomLevel])
+  }, [closeFact])
 
   return {
     // Motion values
@@ -247,5 +255,6 @@ export function useScannerState() {
     analysisError,
     handleAnalyze,
     handleReset,
+    closeFact,
   }
 }

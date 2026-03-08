@@ -62,19 +62,19 @@ const LungSVG = memo(function LungSVG({
     >
       <defs>
         <radialGradient id="lungGradient" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#8b0000" stopOpacity="0.8" />
-          <stop offset="50%" stopColor="#b22222" stopOpacity="0.6" />
+          <stop offset="0%" stopColor="#FF775E" stopOpacity="0.8" />
+          <stop offset="50%" stopColor="#CC5F4B" stopOpacity="0.6" />
           <stop offset="100%" stopColor="#000000" stopOpacity="1" />
         </radialGradient>
 
         <radialGradient id="glowGradient" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ff0000" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#ff0000" stopOpacity="0" />
+          <stop offset="0%" stopColor="#FF775E" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#FF775E" stopOpacity="0" />
         </radialGradient>
 
         <linearGradient id="bronchiGradient">
-          <stop offset="0%" stopColor="#dc143c" stopOpacity="1" />
-          <stop offset="100%" stopColor="#dc143c" stopOpacity="0.3" />
+          <stop offset="0%" stopColor="#FF775E" stopOpacity="1" />
+          <stop offset="100%" stopColor="#FF775E" stopOpacity="0.3" />
         </linearGradient>
 
         <filter id="redGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -102,7 +102,7 @@ const LungSVG = memo(function LungSVG({
       {/* Trachea path */}
       <path
         d={tracheaPath}
-        stroke="#b22222"
+        stroke="#CC5F4B"
         strokeWidth={4}
         fill="none"
         strokeLinecap="round"
@@ -116,7 +116,7 @@ const LungSVG = memo(function LungSVG({
           cx={alv.x}
           cy={alv.y}
           r={5}
-          fill="#8b0000"
+          fill="#CC5F4B"
           filter="url(#redGlow)"
           animate={{
             opacity: [0.4, 1, 0.4],
@@ -157,7 +157,7 @@ const LungSVG = memo(function LungSVG({
           cy={400}
           r={80}
           fill="url(#lungGradient)"
-          stroke="#dc143c"
+          stroke="#FF775E"
           strokeWidth={2}
           opacity={0.9}
         />
@@ -168,13 +168,13 @@ const LungSVG = memo(function LungSVG({
           cy={400}
           r={25}
           fill="#000000"
-          stroke="#ff0000"
+          stroke="#FF775E"
           strokeWidth={1.5}
           opacity={0.8}
         />
 
         {/* Core detail */}
-        <circle cx={400} cy={400} r={10} fill="#8b0000" opacity={0.9} />
+        <circle cx={400} cy={400} r={10} fill="#CC5F4B" opacity={0.9} />
       </motion.g>
     </motion.svg>
   )

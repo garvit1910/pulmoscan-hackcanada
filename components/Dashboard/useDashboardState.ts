@@ -15,6 +15,14 @@ export function useDashboardState() {
   const [isPredicting, setIsPredicting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Immediately dismiss the fact/quote overlay
+  const closeFact = useCallback(() => {
+    animate(zoomLevel, 1, {
+      duration: 1.5,
+      ease: [0.6, 0.01, 0.05, 0.95],
+    })
+  }, [zoomLevel])
+
   const handleBreathingComplete = useCallback((points: BreathingPoint[]) => {
     setBreathingData(points)
     setError(null)
@@ -26,6 +34,9 @@ export function useDashboardState() {
   }, [])
 
   const handlePredict = useCallback(() => {
+    // Always dismiss fact first
+    closeFact()
+
     // Validate input
     if (breathingData.length === 0 && !uploadedFile) {
       setError('Please draw a breathing pattern or upload a file first.')
@@ -59,19 +70,16 @@ export function useDashboardState() {
       setPredictionResult(mockResult)
       setIsPredicting(false)
     }, 3000)
-  }, [breathingData, uploadedFile, zoomLevel])
+  }, [breathingData, uploadedFile, zoomLevel, closeFact])
 
   const handleReset = useCallback(() => {
-    animate(zoomLevel, 1, {
-      duration: 2,
-      ease: [0.6, 0.01, 0.05, 0.95],
-    })
+    closeFact()
     setBreathingData([])
     setUploadedFile(null)
     setPredictionResult(null)
     setIsPredicting(false)
     setError(null)
-  }, [zoomLevel])
+  }, [closeFact])
 
   const handleClearBreathing = useCallback(() => {
     setBreathingData([])
@@ -86,6 +94,7 @@ export function useDashboardState() {
     predictionResult,
     isPredicting,
     error,
+    closeFact,
     handleBreathingComplete,
     handleFileUpload,
     handlePredict,

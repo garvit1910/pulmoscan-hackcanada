@@ -1,10 +1,12 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft, ExternalLink, Database, BookOpen } from 'lucide-react'
 import PulmonaryWeb3D from '@/components/Canvas3D/PulmonaryWeb3D'
 import Navigation from '@/components/Dashboard/Navigation'
+import RetroLoadingBar from '@/components/ui/RetroLoadingBar'
 import { useMotionValue } from 'framer-motion'
 
 interface Citation {
@@ -98,6 +100,27 @@ export default function CitationsPage() {
   const zoomLevel = useMotionValue(5)
   const quoteOpacity = useMotionValue(0)
 
+  const [loading, setLoading] = useState(true)
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    const duration = 1500 // 1.5s
+    const steps = 30
+    const interval = duration / steps
+    let step = 0
+
+    const timer = setInterval(() => {
+      step++
+      setProgress((step / steps) * 100)
+      if (step >= steps) {
+        clearInterval(timer)
+        setLoading(false)
+      }
+    }, interval)
+
+    return () => clearInterval(timer)
+  }, [])
+
   return (
     <div className="min-h-screen w-full bg-dark-base overflow-x-hidden relative">
       {/* 3D Background */}
@@ -108,8 +131,33 @@ export default function CitationsPage() {
       {/* Navigation */}
       <Navigation />
 
+      {/* Loading State */}
+      <AnimatePresence mode="wait">
+        {loading ? (
+          <motion.div
+            key="loader"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="relative z-10 flex items-center justify-center min-h-screen"
+          >
+            <RetroLoadingBar
+              progress={progress}
+              label="SYSTEM INITIALIZATION"
+              message="Loading citation database..."
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative z-10"
+          >
+
       {/* Content */}
-      <div className="relative z-10 pt-24 pb-16 px-4 max-w-4xl mx-auto">
+      <div className="pt-24 pb-16 px-4 max-w-4xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -195,6 +243,10 @@ export default function CitationsPage() {
           PulmoScan is a research prototype and is not intended for clinical diagnosis.
         </motion.p>
       </div>
+
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
