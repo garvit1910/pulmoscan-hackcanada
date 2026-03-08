@@ -1,0 +1,46 @@
+2026-03-07 22:47:32,863 INFO: Device: mps
+2026-03-07 22:47:32,864 INFO: Using pre-split: train=data/chest-ctscan-images/Data/train  val=data/chest-ctscan-images/Data/valid
+2026-03-07 22:47:32,870 INFO: StagingImageDataset: 613 images from data/chest-ctscan-images/Data/train
+2026-03-07 22:47:32,871 INFO: StagingImageDataset: 72 images from data/chest-ctscan-images/Data/valid
+2026-03-07 22:47:32,871 INFO: Train: 613 samples  Val: 72 samples
+2026-03-07 22:47:32,871 INFO: class_to_idx: {'adenocarcinoma': 0, 'large_cell_carcinoma': 1, 'normal': 2, 'squamous_cell_carcinoma': 3}
+2026-03-07 22:47:33,112 INFO: Model: EfficientNet-B0, 4 classes
+/Users/garvit/pulmoscan-hackcanada/.venv/lib/python3.9/site-packages/torch/utils/data/dataloader.py:684: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, then device pinned memory won't be used.
+  warnings.warn(warn_msg)
+2026-03-07 22:49:10,724 INFO: Epoch 1/20 | train_loss=1.1619 acc=0.543 | val_loss=1.1230 acc=0.500 | 97.6s
+2026-03-07 22:49:11,117 INFO: Saved checkpoint: /Users/garvit/pulmoscan-hackcanada/ml/checkpoints/best_model.pth  (epoch=1, val_acc=0.500)
+2026-03-07 22:49:11,117 INFO:   ↑ New best val_acc=0.5000 — checkpoint saved
+2026-03-07 22:50:21,989 INFO: Epoch 2/20 | train_loss=0.8564 acc=0.719 | val_loss=0.9613 acc=0.611 | 70.9s
+2026-03-07 22:50:22,170 INFO: Saved checkpoint: /Users/garvit/pulmoscan-hackcanada/ml/checkpoints/best_model.pth  (epoch=2, val_acc=0.611)
+2026-03-07 22:50:22,170 INFO:   ↑ New best val_acc=0.6111 — checkpoint saved
+2026-03-07 22:51:32,823 INFO: Epoch 3/20 | train_loss=0.6546 acc=0.783 | val_loss=0.7521 acc=0.722 | 70.7s
+2026-03-07 22:51:33,007 INFO: Saved checkpoint: /Users/garvit/pulmoscan-hackcanada/ml/checkpoints/best_model.pth  (epoch=3, val_acc=0.722)
+2026-03-07 22:51:33,008 INFO:   ↑ New best val_acc=0.7222 — checkpoint saved
+2026-03-07 22:52:43,547 INFO: Epoch 4/20 | train_loss=0.4895 acc=0.858 | val_loss=0.6311 acc=0.778 | 70.5s
+2026-03-07 22:52:43,751 INFO: Saved checkpoint: /Users/garvit/pulmoscan-hackcanada/ml/checkpoints/best_model.pth  (epoch=4, val_acc=0.778)
+2026-03-07 22:52:43,751 INFO:   ↑ New best val_acc=0.7778 — checkpoint saved
+2026-03-07 22:53:56,723 INFO: Epoch 5/20 | train_loss=0.3556 acc=0.902 | val_loss=0.4864 acc=0.819 | 73.0s
+2026-03-07 22:53:56,909 INFO: Saved checkpoint: /Users/garvit/pulmoscan-hackcanada/ml/checkpoints/best_model.pth  (epoch=5, val_acc=0.819)
+2026-03-07 22:53:56,909 INFO:   ↑ New best val_acc=0.8194 — checkpoint saved
+2026-03-07 22:55:10,516 INFO: Epoch 6/20 | train_loss=0.2524 acc=0.920 | val_loss=0.4005 acc=0.833 | 73.6s
+2026-03-07 22:55:10,695 INFO: Saved checkpoint: /Users/garvit/pulmoscan-hackcanada/ml/checkpoints/best_model.pth  (epoch=6, val_acc=0.833)
+2026-03-07 22:55:10,696 INFO:   ↑ New best val_acc=0.8333 — checkpoint saved
+2026-03-07 22:56:22,576 INFO: Epoch 7/20 | train_loss=0.1832 acc=0.951 | val_loss=0.3433 acc=0.917 | 71.9s
+2026-03-07 22:56:22,802 INFO: Saved checkpoint: /Users/garvit/pulmoscan-hackcanada/ml/checkpoints/best_model.pth  (epoch=7, val_acc=0.917)
+2026-03-07 22:56:22,802 INFO:   ↑ New best val_acc=0.9167 — checkpoint saved
+2026-03-07 22:57:36,126 INFO: Epoch 8/20 | train_loss=0.1430 acc=0.962 | val_loss=0.3510 acc=0.889 | 73.3s
+2026-03-07 22:58:48,492 INFO: Epoch 9/20 | train_loss=0.1429 acc=0.961 | val_loss=0.3161 acc=0.903 | 72.4s
+2026-03-07 23:00:01,936 INFO: Epoch 10/20 | train_loss=0.1023 acc=0.971 | val_loss=0.2954 acc=0.903 | 73.4s
+2026-03-07 23:01:09,107 INFO: Epoch 11/20 | train_loss=0.0838 acc=0.980 | val_loss=0.3105 acc=0.917 | 67.2s
+2026-03-07 23:02:14,158 INFO: Epoch 12/20 | train_loss=0.0870 acc=0.977 | val_loss=0.3245 acc=0.903 | 65.0s
+2026-03-07 23:03:22,480 INFO: Epoch 13/20 | train_loss=0.0614 acc=0.987 | val_loss=0.2969 acc=0.917 | 68.3s
+2026-03-07 23:04:29,127 INFO: Epoch 14/20 | train_loss=0.0685 acc=0.984 | val_loss=0.3119 acc=0.903 | 66.6s
+2026-03-07 23:05:37,035 INFO: Epoch 15/20 | train_loss=0.0632 acc=0.990 | val_loss=0.3116 acc=0.889 | 67.9s
+2026-03-07 23:06:46,576 INFO: Epoch 16/20 | train_loss=0.0671 acc=0.985 | val_loss=0.2875 acc=0.903 | 69.5s
+2026-03-07 23:07:56,267 INFO: Epoch 17/20 | train_loss=0.0605 acc=0.987 | val_loss=0.2609 acc=0.903 | 69.7s
+2026-03-07 23:09:07,717 INFO: Epoch 18/20 | train_loss=0.0454 acc=0.984 | val_loss=0.2849 acc=0.889 | 71.4s
+2026-03-07 23:10:18,907 INFO: Epoch 19/20 | train_loss=0.0497 acc=0.990 | val_loss=0.3263 acc=0.875 | 71.2s
+2026-03-07 23:11:23,763 INFO: Epoch 20/20 | train_loss=0.0433 acc=0.995 | val_loss=0.2667 acc=0.931 | 64.9s
+2026-03-07 23:11:23,893 INFO: Saved checkpoint: /Users/garvit/pulmoscan-hackcanada/ml/checkpoints/best_model.pth  (epoch=20, val_acc=0.931)
+2026-03-07 23:11:23,894 INFO:   ↑ New best val_acc=0.9306 — checkpoint saved
+2026-03-07 23:11:23,894 INFO: Training complete. Best val_acc=0.9306
