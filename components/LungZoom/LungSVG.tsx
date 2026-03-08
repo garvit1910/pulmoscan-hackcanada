@@ -65,21 +65,21 @@ const LungSVG = memo(function LungSVG({
       <defs>
         {/* Radial gradient for central lung body */}
         <radialGradient id="lungGradient" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FF775E" stopOpacity={0.8} />
+          <stop offset="0%" stopColor="#E8506A" stopOpacity={0.8} />
           <stop offset="50%" stopColor="#CC5F4B" stopOpacity={0.6} />
           <stop offset="100%" stopColor="#000000" stopOpacity={1} />
         </radialGradient>
 
         {/* Radial gradient for ambient glow ring */}
         <radialGradient id="glowGradient" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FF775E" stopOpacity={0.4} />
-          <stop offset="100%" stopColor="#FF775E" stopOpacity={0} />
+          <stop offset="0%" stopColor="#E8506A" stopOpacity={0.4} />
+          <stop offset="100%" stopColor="#E8506A" stopOpacity={0} />
         </radialGradient>
 
         {/* Linear gradient for bronchial branches */}
         <linearGradient id="bronchiGradient">
-          <stop offset="0%" stopColor="#FF775E" stopOpacity={1} />
-          <stop offset="100%" stopColor="#FF775E" stopOpacity={0.3} />
+          <stop offset="0%" stopColor="#E8506A" stopOpacity={1} />
+          <stop offset="100%" stopColor="#E8506A" stopOpacity={0.3} />
         </linearGradient>
 
         {/* Soft halo filter */}
@@ -141,9 +141,9 @@ const LungSVG = memo(function LungSVG({
       <motion.g
         animate={{
           filter: [
-            'drop-shadow(0 0 8px rgba(255,119,94,0.6))',
-            'drop-shadow(0 0 16px rgba(255,119,94,0.9))',
-            'drop-shadow(0 0 8px rgba(255,119,94,0.6))',
+            'drop-shadow(0 0 8px rgba(232,80,106,0.6))',
+            'drop-shadow(0 0 16px rgba(232,80,106,0.9))',
+            'drop-shadow(0 0 8px rgba(232,80,106,0.6))',
           ],
           scale: [1, 1.02, 1],
         }}
@@ -161,7 +161,7 @@ const LungSVG = memo(function LungSVG({
         <circle
           cx={400} cy={400} r={80}
           fill="url(#lungGradient)"
-          stroke="#FF775E"
+          stroke="#E8506A"
           strokeWidth={2}
           opacity={0.9}
         />
@@ -170,7 +170,7 @@ const LungSVG = memo(function LungSVG({
         <circle
           cx={400} cy={400} r={25}
           fill="#000000"
-          stroke="#FF775E"
+          stroke="#E8506A"
           strokeWidth={1.5}
           opacity={0.8}
         />

@@ -108,6 +108,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.6, 0.01, 0.05, 0.95] }}
           className="font-pixel text-4xl md:text-6xl text-primary-coral glow-text-coral tracking-wider"
+          style={{ WebkitTextStroke: '1.5px black', paintOrder: 'stroke fill' }}
         >
           PulmoScan
         </motion.h1>
@@ -116,7 +117,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="font-mono text-lg md:text-2xl text-retro-cream/70 mt-4 max-w-xl"
+          className="font-mono text-lg md:text-2xl text-white mt-4 max-w-xl"
         >
           Advanced Pulmonary Disease Detection
         </motion.p>
@@ -128,14 +129,14 @@ export default function Home() {
           transition={{ delay: 0.7, duration: 0.5 }}
           className="flex flex-wrap items-center justify-center gap-4 mt-10"
         >
-          <Link href="/scanner" className="btn-retro px-6 py-3 font-pixel text-xs md:text-sm">
+          <Link href="/scanner" className="btn-retro text-white px-6 py-3 font-pixel text-xs md:text-sm">
             Open Dashboard
           </Link>
-          <Link href="/learn-more" className="btn-retro-outline px-6 py-3 font-pixel text-xs md:text-sm flex items-center gap-2">
+          <Link href="/learn-more" className="btn-retro text-white px-6 py-3 font-pixel text-xs md:text-sm flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
             Learn More
           </Link>
-          <Link href="/citations" className="btn-retro-outline px-6 py-3 font-pixel text-xs md:text-sm flex items-center gap-2">
+          <Link href="/citations" className="btn-retro text-white px-6 py-3 font-pixel text-xs md:text-sm flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Citations
           </Link>

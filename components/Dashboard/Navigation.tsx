@@ -50,14 +50,14 @@ export default function Navigation() {
     >
       <Link
         href="/"
-        className="font-pixel text-xs text-[#FF775E] glow-text-coral hover:opacity-80 transition-opacity"
+        className="font-pixel text-xs text-[#E8506A] glow-text-coral hover:opacity-80 transition-opacity"
       >
         PulmoScan
       </Link>
 
       <Link
         href="/"
-        className="font-mono text-sm text-[#FF775E]/60 hover:text-[#FF775E] transition-colors"
+        className="font-mono text-sm text-[#E8506A]/60 hover:text-[#E8506A] transition-colors"
       >
         ← Exit
       </Link>

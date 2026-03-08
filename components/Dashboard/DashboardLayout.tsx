@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import PulmonaryWeb3D from '@/components/Canvas3D/PulmonaryWeb3D'
 import DiagnosticQuote from '@/components/Canvas3D/DiagnosticQuote'
+import LungScene3D from '@/components/Canvas3D/LungScene3D'
 import Navigation from './Navigation'
 import LeftSidebar from './LeftSidebar'
 import CenterWorkspace from './CenterWorkspace'
@@ -17,6 +18,11 @@ export default function DashboardLayout() {
       {/* 3D Background */}
       <div className="absolute inset-0 z-0">
         <PulmonaryWeb3D zoomLevel={state.zoomLevel} />
+      </div>
+
+      {/* Decorative rotating lung */}
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
+        <LungScene3D decorative decorativeScale={0.8} />
       </div>
 
       {/* Navigation */}

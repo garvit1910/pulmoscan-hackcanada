@@ -45,16 +45,16 @@ export default function DiagnosticQuote({ quoteOpacity, closeFact }: DiagnosticQ
           transition={{ type: 'spring', stiffness: 120, damping: 18 }}
           className="fixed bottom-10 right-10 z-[9999] max-w-sm pointer-events-auto"
         >
-          <div className="relative rounded-none overflow-hidden border-4 border-[#FF775E] shadow-pixel bg-[#0a0a0a]/95">
-            {/* Peach header bar */}
-            <div className="bg-[#FF775E] px-4 py-2 flex items-center justify-between">
+          <div className="relative rounded-none overflow-hidden border-4 border-[#E8506A] shadow-pixel bg-[#0a0a0a]/95">
+            {/* Neon pink header bar */}
+            <div className="bg-[#E8506A] px-4 py-2 flex items-center justify-between">
               <p className="font-pixel text-[8px] text-[#0a0a0a] tracking-[0.2em]">
                 PULMO-FACT
               </p>
               {/* X button — peach bg, black X, pointer-events-auto */}
               <button
                 onClick={handleDismiss}
-                className="pointer-events-auto w-6 h-6 flex items-center justify-center bg-[#0a0a0a] text-[#FF775E] hover:bg-[#FF775E] hover:text-[#0a0a0a] border border-[#FF775E] transition-colors rounded-none"
+                className="pointer-events-auto w-6 h-6 flex items-center justify-center bg-[#0a0a0a] text-[#E8506A] hover:bg-[#E8506A] hover:text-[#0a0a0a] border border-[#E8506A] transition-colors rounded-none"
               >
                 <X size={14} />
               </button>
@@ -62,7 +62,7 @@ export default function DiagnosticQuote({ quoteOpacity, closeFact }: DiagnosticQ
 
             {/* Body */}
             <div className="p-5">
-              <p className="font-mono text-sm text-[#FF775E] leading-relaxed">
+              <p className="font-mono text-sm text-[#E8506A] leading-relaxed">
                 &ldquo;Early detection of pulmonary fibrosis can slow progression by up to 50%.
                 Every breath analyzed is a step toward saving lives.&rdquo;
               </p>
@@ -76,7 +76,7 @@ export default function DiagnosticQuote({ quoteOpacity, closeFact }: DiagnosticQ
               initial={{ scaleX: 1 }}
               animate={{ scaleX: 0 }}
               transition={{ duration: 6, ease: 'linear' }}
-              className="h-[3px] bg-[#FF775E] origin-left"
+              className="h-[3px] bg-[#E8506A] origin-left"
             />
           </div>
         </motion.div>

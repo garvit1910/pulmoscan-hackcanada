@@ -41,7 +41,7 @@ export function useBreathingDrawing({ onComplete }: UseBreathingDrawingOptions =
     ctx.beginPath()
     ctx.moveTo(from.x, from.y)
     ctx.lineTo(to.x, to.y)
-    ctx.strokeStyle = '#FF775E'
+    ctx.strokeStyle = '#E8506A'
     ctx.lineWidth = 3
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'

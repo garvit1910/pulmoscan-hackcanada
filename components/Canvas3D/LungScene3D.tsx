@@ -19,12 +19,13 @@ import * as THREE from 'three'
    ═══════════════════════════════════════════════════════════════ */
 const BREATH_PERIOD = 4.0        // faster, more visible cycle
 const BREATH_AMP = 0.06          // much stronger breathing
-const ROT_Y_SPEED = 0.08
+const ROT_Y_SPEED = 0.22
 const ROT_X_AMP = 0.06
 const ROT_X_PERIOD = 10
 
-const PEACH = '#FF775E'
-const PEACH_DIM = '#CC5F4B'
+const PEACH = '#F48BA0'       // richer pink — lung tissue
+const PEACH_DIM = '#D97085'   // deeper muted pink
+const NEON_ORANGE = '#CC2233' // deep red — vessels & edges
 
 const DIVE_DURATION = 2.8        // seconds for fly-in animation
 const EXTERIOR_SCALE = 2.2       // 2.2× larger — fills screen for wow factor
@@ -139,13 +140,14 @@ function LungLobe({ position, rx, ry, rz, side, taper, phaseOffset }: LobeProps)
     <group ref={groupRef} position={position}>
       <mesh geometry={geometry}>
         <meshPhysicalMaterial
-          color={PEACH} transparent opacity={0.14}
+          color={PEACH} transparent opacity={0.28}
           side={THREE.DoubleSide} depthWrite={false}
-          roughness={0.8} metalness={0.1} clearcoat={0.3}
+          roughness={0.6} metalness={0.15} clearcoat={0.4}
+          emissive={NEON_ORANGE} emissiveIntensity={0.15}
         />
       </mesh>
       <lineSegments geometry={edgesGeo}>
-        <lineBasicMaterial color={PEACH} transparent opacity={0.25} />
+        <lineBasicMaterial color={NEON_ORANGE} transparent opacity={0.35} />
       </lineSegments>
       <mesh geometry={geometry}>
         <meshBasicMaterial
@@ -278,16 +280,16 @@ function BronchialTree() {
     <group ref={groupRef}>
       {tubes.map((tube, i) => (
         <mesh key={i} geometry={tube.geo}>
-          <meshBasicMaterial color={PEACH} transparent opacity={tube.opacity} side={THREE.DoubleSide} />
+          <meshBasicMaterial color={NEON_ORANGE} transparent opacity={Math.min(1, tube.opacity * 1.2)} side={THREE.DoubleSide} />
         </mesh>
       ))}
       <lineSegments geometry={fineLineGeo}>
-        <lineBasicMaterial color={PEACH} transparent opacity={0.22} />
+        <lineBasicMaterial color={NEON_ORANGE} transparent opacity={0.3} />
       </lineSegments>
       {[0, 0.18, 0.36, 0.54].map((dy, i) => (
         <mesh key={`ring-${i}`} position={[0, 1.95 - dy, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.085, 0.012, 6, 20]} />
-          <meshBasicMaterial color={PEACH_DIM} transparent opacity={0.5} />
+          <meshBasicMaterial color={NEON_ORANGE} transparent opacity={0.4} />
         </mesh>
       ))}
     </group>
@@ -378,9 +380,9 @@ function AlveolarClusters() {
     <instancedMesh ref={meshRef} args={[undefined, undefined, totalCount]}>
       <sphereGeometry args={[1, 8, 8]} />
       <meshPhysicalMaterial
-        color={PEACH} transparent opacity={0.55}
-        roughness={0.6} metalness={0.05} clearcoat={0.2}
-        emissive={PEACH} emissiveIntensity={0.08}
+        color={PEACH} transparent opacity={0.6}
+        roughness={0.5} metalness={0.1} clearcoat={0.3}
+        emissive={NEON_ORANGE} emissiveIntensity={0.12}
       />
     </instancedMesh>
   )
@@ -426,7 +428,7 @@ function CapillaryNetwork({ count = 400 }: { count?: number }) {
 
   return (
     <lineSegments geometry={geometry}>
-      <lineBasicMaterial color={PEACH} transparent opacity={0.1} />
+      <lineBasicMaterial color={NEON_ORANGE} transparent opacity={0.18} />
     </lineSegments>
   )
 }
@@ -488,7 +490,7 @@ function OxygenParticles({ count = 80 }: { count?: number }) {
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
       <sphereGeometry args={[1, 4, 4]} />
-      <meshBasicMaterial color="#ffffff" transparent opacity={0.5} />
+      <meshBasicMaterial color="#FF8888" transparent opacity={0.4} />
     </instancedMesh>
   )
 }
@@ -508,7 +510,7 @@ function AmbientGlow() {
     <mesh>
       <sphereGeometry args={[3, 32, 32]} />
       <meshBasicMaterial
-        ref={matRef} color={PEACH} transparent opacity={0.05}
+        ref={matRef} color={NEON_ORANGE} transparent opacity={0.05}
         side={THREE.BackSide} depthWrite={false}
       />
     </mesh>
@@ -578,7 +580,7 @@ function createAlveolusClusterGeo(numSacs: number): { solid: THREE.BufferGeometr
   return { solid: solidGeo, edges: edgesGeo }
 }
 
-function InteriorAlveoli({ count = 25, onHover }: { count?: number; onHover?: (fact: string | null, x: number, y: number) => void }) {
+function InteriorAlveoli({ count = 25, onHover, scrollRotRef }: { count?: number; onHover?: (fact: string | null, x: number, y: number) => void; scrollRotRef?: { current: number } }) {
   const groupRef = useRef<THREE.Group>(null)
 
   const alveoli = useMemo(() => {
@@ -620,7 +622,7 @@ function InteriorAlveoli({ count = 25, onHover }: { count?: number; onHover?: (f
   useFrame(({ clock }) => {
     if (!groupRef.current) return
     const t = clock.elapsedTime
-    groupRef.current.rotation.y = t * 0.04
+    groupRef.current.rotation.y = t * 0.04 + (scrollRotRef?.current ?? 0)
     groupRef.current.rotation.x = Math.sin(t * 0.025) * 0.08
   })
 
@@ -652,7 +654,7 @@ function InteriorAlveoli({ count = 25, onHover }: { count?: number; onHover?: (f
     <group ref={groupRef}>
       {/* Connecting bronchiole tubes between clusters */}
       <lineSegments geometry={connectionGeo}>
-        <lineBasicMaterial color={PEACH} transparent opacity={0.18} />
+        <lineBasicMaterial color={NEON_ORANGE} transparent opacity={0.25} />
       </lineSegments>
       {alveoli.map((a, i) => (
         <AlveolusCluster key={i} data={a} onHover={onHover} />
@@ -707,17 +709,18 @@ function AlveolusCluster({ data, onHover }: {
       {/* Thin transparent membrane fill */}
       <mesh geometry={solid}>
         <meshPhysicalMaterial
-          color={hovered ? '#FFD4CC' : PEACH}
-          transparent opacity={hovered ? 0.14 : 0.07}
+          color={hovered ? '#FFCCD5' : '#FFB6C1'}
+          transparent opacity={hovered ? 0.22 : 0.12}
           side={THREE.DoubleSide} depthWrite={false}
-          roughness={0.6} clearcoat={0.3}
+          roughness={0.5} clearcoat={0.4}
+          emissive={NEON_ORANGE} emissiveIntensity={hovered ? 0.2 : 0.08}
         />
       </mesh>
       {/* Cell-wall edges — the defining visual */}
       <lineSegments geometry={edges}>
         <lineBasicMaterial
-          color={hovered ? '#FFD4CC' : PEACH}
-          transparent opacity={hovered ? 0.55 : 0.3}
+          color={NEON_ORANGE}
+          transparent opacity={hovered ? 0.6 : 0.35}
         />
       </lineSegments>
       {/* Invisible hit sphere for pointer events */}
@@ -737,14 +740,14 @@ function InteriorWall() {
   const matRef = useRef<THREE.MeshBasicMaterial>(null)
   useFrame(({ clock }) => {
     if (!matRef.current) return
-    matRef.current.opacity = 0.06 + 0.02 * Math.sin(clock.elapsedTime * 0.4)
+    matRef.current.opacity = 0.05 + 0.02 * Math.sin(clock.elapsedTime * 0.4)
   })
 
   return (
     <mesh>
       <sphereGeometry args={[9, 32, 32]} />
       <meshBasicMaterial
-        ref={matRef} color={PEACH_DIM} transparent opacity={0.06}
+        ref={matRef} color={PEACH} transparent opacity={0.05}
         side={THREE.BackSide} depthWrite={false}
       />
     </mesh>
@@ -792,7 +795,7 @@ function InteriorParticles({ count = 120 }: { count?: number }) {
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
       <sphereGeometry args={[1, 4, 4]} />
-      <meshBasicMaterial color="#FFD4CC" transparent opacity={0.35} />
+      <meshBasicMaterial color="#FF8888" transparent opacity={0.3} />
     </instancedMesh>
   )
 }
@@ -826,7 +829,7 @@ function InteriorCapillaries() {
   return (
     <group ref={groupRef}>
       <lineSegments geometry={geometry}>
-        <lineBasicMaterial color={PEACH_DIM} transparent opacity={0.12} />
+        <lineBasicMaterial color={NEON_ORANGE} transparent opacity={0.2} />
       </lineSegments>
     </group>
   )
@@ -839,10 +842,14 @@ function SceneManager({
   phase,
   onPhaseChange,
   onAlveolusHover,
+  scrollRotRef,
+  mouseLookRef,
 }: {
   phase: string
   onPhaseChange?: (p: string) => void
   onAlveolusHover?: (fact: string | null, x: number, y: number) => void
+  scrollRotRef?: { current: number }
+  mouseLookRef?: { current: { x: number; y: number } }
 }) {
   const progressRef = useRef(0)
   const notifiedRef = useRef<string | null>(null)
@@ -883,7 +890,15 @@ function SceneManager({
 
     camera.position.y = THREE.MathUtils.lerp(0.2, 0, eased)
     camera.position.z = THREE.MathUtils.lerp(4.5, 0.1, eased)
-    camera.lookAt(0, 0, 0)
+
+    // Interior mouse look: offset camera lookAt based on mouse position
+    if (phase === 'interior' && mouseLookRef) {
+      const lookX = mouseLookRef.current.x * 3.0
+      const lookY = mouseLookRef.current.y * 2.0
+      camera.lookAt(lookX, lookY, -2)
+    } else {
+      camera.lookAt(0, 0, 0)
+    }
 
     const perspCam = camera as THREE.PerspectiveCamera
     perspCam.fov = THREE.MathUtils.lerp(45, 75, eased)
@@ -907,9 +922,10 @@ function SceneManager({
 
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[3, 3, 5]} intensity={0.7} color="#FFD4CC" />
-      <pointLight position={[-3, -2, 4]} intensity={0.35} color={PEACH} />
+      <ambientLight intensity={0.6} />
+      <pointLight position={[3, 3, 5]} intensity={0.8} color="#FFCCD5" />
+      <pointLight position={[-3, -2, 4]} intensity={0.3} color={NEON_ORANGE} />
+      <pointLight position={[0, 0, 3]} intensity={0.4} color={PEACH} />
 
       {/* ── Exterior lung ── */}
       <group ref={exteriorRef}>
@@ -929,10 +945,11 @@ function SceneManager({
 
       {/* ── Interior alveoli world ── */}
       <group ref={interiorRef} visible={false}>
-        <pointLight position={[0, 0, 0]} intensity={0.4} color="#FFD4CC" distance={12} />
-        <pointLight position={[3, 2, 3]} intensity={0.2} color={PEACH} />
-        <pointLight position={[-3, -1, -3]} intensity={0.15} color={PEACH} />
-        <InteriorAlveoli count={25} onHover={onAlveolusHover} />
+        <pointLight position={[0, 0, 0]} intensity={0.5} color="#FFCCD5" distance={15} />
+        <pointLight position={[3, 2, 3]} intensity={0.25} color={NEON_ORANGE} />
+        <pointLight position={[-3, -1, -3]} intensity={0.2} color={PEACH} />
+        <pointLight position={[0, 3, 0]} intensity={0.15} color={NEON_ORANGE} />
+        <InteriorAlveoli count={25} onHover={onAlveolusHover} scrollRotRef={scrollRotRef} />
         <InteriorWall />
         <InteriorParticles count={120} />
         <InteriorCapillaries />
@@ -956,9 +973,9 @@ function DecorativeScene({ scale = 1.0 }: { scale?: number }) {
 
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[3, 3, 5]} intensity={0.7} color="#FFD4CC" />
-      <pointLight position={[-3, -2, 4]} intensity={0.35} color={PEACH} />
+      <ambientLight intensity={0.4} />
+      <pointLight position={[3, 3, 5]} intensity={0.5} color="#FFCCD5" />
+      <pointLight position={[-3, -2, 4]} intensity={0.2} color={NEON_ORANGE} />
       <group scale={scale}>
         <group ref={groupRef}>
           <LungLobe position={[0.85, 0.6, 0]} rx={0.5} ry={0.5} rz={0.35} side="right" taper={0.2} phaseOffset={0} />
@@ -1027,6 +1044,38 @@ function InteractiveLungScene({ phase = 'exterior', onPhaseChange }: { phase?: s
     }
   }, [phase])
 
+  // Scroll-to-rotate alveoli in interior
+  const scrollRotRef = useRef(0)
+  useEffect(() => {
+    if (phase !== 'interior') {
+      scrollRotRef.current = 0
+      return
+    }
+    const onWheel = (e: WheelEvent) => {
+      scrollRotRef.current += e.deltaY * 0.003
+    }
+    window.addEventListener('wheel', onWheel, { passive: true })
+    return () => window.removeEventListener('wheel', onWheel)
+  }, [phase])
+
+  // Mouse look for interior — move mouse to look around
+  const mouseLookRef = useRef({ x: 0, y: 0 })
+  useEffect(() => {
+    if (phase !== 'interior') {
+      mouseLookRef.current = { x: 0, y: 0 }
+      return
+    }
+    const onMouseMove = (e: MouseEvent) => {
+      // Normalize to -1..1 from center of viewport
+      mouseLookRef.current = {
+        x: (e.clientX / window.innerWidth - 0.5) * 2,
+        y: -(e.clientY / window.innerHeight - 0.5) * 2,
+      }
+    }
+    window.addEventListener('mousemove', onMouseMove, { passive: true })
+    return () => window.removeEventListener('mousemove', onMouseMove)
+  }, [phase])
+
   // ESC to return from interior
   useEffect(() => {
     if (phase !== 'interior') return
@@ -1088,7 +1137,7 @@ function InteractiveLungScene({ phase = 'exterior', onPhaseChange }: { phase?: s
           dpr={[1, 2]}
         >
           <Suspense fallback={null}>
-            <SceneManager phase={phase} onPhaseChange={onPhaseChange} onAlveolusHover={handleAlveolusHover} />
+            <SceneManager phase={phase} onPhaseChange={onPhaseChange} onAlveolusHover={handleAlveolusHover} scrollRotRef={scrollRotRef} mouseLookRef={mouseLookRef} />
           </Suspense>
         </Canvas>
       </div>
@@ -1100,7 +1149,7 @@ function InteractiveLungScene({ phase = 'exterior', onPhaseChange }: { phase?: s
           <div
             className="absolute inset-0"
             style={{
-              background: `radial-gradient(ellipse at center, rgba(255,119,94,0.6) 0%, rgba(204,95,75,0.3) 30%, rgba(10,10,10,0.9) 70%, rgba(10,10,10,1) 100%)`,
+              background: `radial-gradient(ellipse at center, rgba(204,34,51,0.6) 0%, rgba(232,80,106,0.3) 30%, rgba(10,10,10,0.9) 70%, rgba(10,10,10,1) 100%)`,
               animation: `${phase === 'diving' ? 'lung-warp-in' : 'lung-warp-out'} ${DIVE_DURATION}s ease-in-out forwards`,
               transformOrigin: 'center center',
             }}
@@ -1123,7 +1172,7 @@ function InteractiveLungScene({ phase = 'exterior', onPhaseChange }: { phase?: s
                   style={{
                     width: '2px',
                     height: `${40 + Math.random() * 60}%`,
-                    background: `linear-gradient(to bottom, transparent, rgba(255,119,94,${0.3 + Math.random() * 0.4}), transparent)`,
+                    background: `linear-gradient(to bottom, transparent, rgba(232,80,106,${0.3 + Math.random() * 0.4}), transparent)`,
                     transform: `rotate(${angle}deg) translateY(-${dist}%)`,
                     transformOrigin: 'center center',
                   }}
@@ -1142,7 +1191,7 @@ function InteractiveLungScene({ phase = 'exterior', onPhaseChange }: { phase?: s
             <div
               className="w-64 h-64 rounded-full"
               style={{
-                background: 'radial-gradient(circle, rgba(255,212,204,0.8) 0%, rgba(255,119,94,0.4) 40%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(255,212,204,0.8) 0%, rgba(204,34,51,0.4) 40%, transparent 70%)',
               }}
             />
           </div>
@@ -1158,8 +1207,8 @@ function InteractiveLungScene({ phase = 'exterior', onPhaseChange }: { phase?: s
             <div
               className="w-[80vmin] h-[80vmin] rounded-full"
               style={{
-                border: '3px solid rgba(255,119,94,0.5)',
-                boxShadow: '0 0 30px rgba(255,119,94,0.3), 0 0 60px rgba(255,119,94,0.15)',
+                border: '3px solid rgba(204,34,51,0.5)',
+                boxShadow: '0 0 30px rgba(204,34,51,0.3), 0 0 60px rgba(232,80,106,0.15)',
               }}
             />
           </div>
@@ -1198,7 +1247,7 @@ function InteractiveLungScene({ phase = 'exterior', onPhaseChange }: { phase?: s
               style={{
                 background: 'rgba(10, 10, 10, 0.92)',
                 backdropFilter: 'blur(12px)',
-                boxShadow: '0 0 20px rgba(255,119,94,0.2), 0 4px 16px rgba(0,0,0,0.6)',
+                boxShadow: '0 0 20px rgba(204,34,51,0.2), 0 4px 16px rgba(0,0,0,0.6)',
               }}
             >
               <p className="font-mono text-xs text-primary-coral/80 mb-1 tracking-wider uppercase">
@@ -1217,7 +1266,7 @@ function InteractiveLungScene({ phase = 'exterior', onPhaseChange }: { phase?: s
         <>
           <div className="absolute top-6 left-0 right-0 text-center pointer-events-none">
             <p className="font-mono text-xs text-retro-cream/40 tracking-wider animate-pulse">
-              press ESC or click to return · hover on sacs for facts
+              press ESC or click to return · scroll to rotate · move mouse to look around
             </p>
           </div>
           <div className="absolute bottom-12 left-0 right-0 text-center pointer-events-none">

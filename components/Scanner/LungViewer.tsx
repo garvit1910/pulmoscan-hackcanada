@@ -44,98 +44,13 @@ export default function LungViewer({
   }, [hasResult, isAnalyzing])
   return (
     <div className="relative w-full aspect-square max-h-[400px] rounded-none pixel-border overflow-hidden flex items-center justify-center">
-      {/* Pulsating lung SVG */}
-      <svg
-        viewBox="0 0 400 400"
-        className="w-3/4 h-3/4"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <radialGradient id="lv-lungGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#FF775E" stopOpacity="0.7" />
-            <stop offset="60%" stopColor="#CC5F4B" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#120D0B" stopOpacity="1" />
-          </radialGradient>
-          <filter id="lv-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Bronchial tree */}
-        {[
-          'M 200 160 C 220 130, 270 110, 310 90',
-          'M 200 160 C 230 140, 280 140, 320 150',
-          'M 200 160 C 180 130, 130 110, 90 90',
-          'M 200 160 C 170 140, 120 140, 80 150',
-          'M 200 200 C 200 230, 200 270, 200 310',
-        ].map((d, i) => (
-          <motion.path
-            key={i}
-            d={d}
-            stroke="#FF775E"
-            strokeWidth={2.5 - i * 0.3}
-            fill="none"
-            strokeLinecap="round"
-            opacity={0.6}
-            animate={
-              isAnalyzing
-                ? { opacity: [0.3, 0.9, 0.3], strokeWidth: [1.5, 3, 1.5] }
-                : {}
-            }
-            transition={
-              isAnalyzing
-                ? { duration: 2, repeat: Infinity, delay: i * 0.2 }
-                : {}
-            }
-          />
-        ))}
-
-        {/* Trachea */}
-        <path
-          d="M 200 60 C 200 90, 200 130, 200 160"
-          stroke="#CC5F4B"
-          strokeWidth={3}
-          fill="none"
-          opacity={0.7}
-        />
-
-        {/* Central body */}
-        <motion.circle
-          cx={200}
-          cy={200}
-          r={70}
-          fill="url(#lv-lungGrad)"
-          stroke="#FF775E"
-          strokeWidth={1.5}
-          filter="url(#lv-glow)"
-          animate={
-            isAnalyzing
-              ? { scale: [1, 1.05, 1], opacity: [0.7, 1, 0.7] }
-              : { scale: 1, opacity: 0.8 }
-          }
-          transition={
-            isAnalyzing
-              ? { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-              : {}
-          }
-          style={{ transformOrigin: '200px 200px' }}
-        />
-
-        {/* Inner core */}
-        <circle
-          cx={200}
-          cy={200}
-          r={20}
-          fill="#000"
-          stroke="#FF775E"
-          strokeWidth={1}
-          opacity={0.7}
-        />
-      </svg>
+      {/* Empty scan area */}
+      {!isAnalyzing && !hasResult && (
+        <div className="flex flex-col items-center gap-3 text-retro-cream/30">
+          <Activity size={48} strokeWidth={1} />
+          <span className="font-mono text-sm">Awaiting CT Scan</span>
+        </div>
+      )}
 
       {/* Processing overlay with retro loading bar */}
       {isAnalyzing && (

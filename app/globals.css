@@ -3,18 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --peach: #FF775E;
+  --peach: #E8506A;
   --dark-base: #0a0a0a;
-  --retro-cream: #FFF1E6;
+  --retro-cream: #F5C6CC;
+  --neon-orange: #CC2233;
   /* legacy vars */
-  --coral: #FF775E;
-  --neon-red: #FF775E;
-  --crimson: #FF775E;
-  --dark-red: #CC5F4B;
+  --coral: #E8506A;
+  --neon-red: #E8506A;
+  --crimson: #E8506A;
+  --dark-red: #B03050;
 }
 
 body {
-  color: #FFF1E6;
+  color: #F5C6CC;
   background-color: #0a0a0a;
   background-image:
     linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
@@ -52,29 +53,30 @@ body::after {
 @layer utilities {
   /* ── Pixel-border utility (replaces glassmorphism) ── */
   .pixel-border {
-    border: 4px solid #FF775E;
-    box-shadow: 4px 4px 0px #000;
+    border: 4px solid #E8506A;
+    box-shadow: 4px 4px 0px #000, 0 0 22px rgba(232,80,106,0.4), 0 0 44px rgba(204,34,51,0.15);
     background: rgba(10, 10, 10, 0.9);
   }
 
   .pixel-border-sm {
-    border: 2px solid #FF775E;
-    box-shadow: 2px 2px 0px #000;
+    border: 2px solid #E8506A;
+    box-shadow: 2px 2px 0px #000, 0 0 14px rgba(232,80,106,0.3), 0 0 28px rgba(204,34,51,0.1);
     background: rgba(10, 10, 10, 0.9);
   }
 
-  /* Chunky retro button — Peach (#FF775E) */
+  /* Chunky retro button — Red-pink with matching glow */
   .btn-retro {
-    border: 4px solid #FF775E;
-    box-shadow: 4px 4px 0px #000;
-    background: #FF775E;
+    border: 4px solid #E8506A;
+    box-shadow: 4px 4px 0px #000, 0 0 28px rgba(232,80,106,0.5), 0 0 56px rgba(204,34,51,0.2);
+    background: #E8506A;
     color: #0a0a0a;
     font-weight: 700;
     transition: transform 0.05s, box-shadow 0.05s;
     cursor: pointer;
   }
   .btn-retro:hover {
-    filter: brightness(1.1);
+    filter: brightness(1.25);
+    box-shadow: 4px 4px 0px #000, 0 0 40px rgba(232,80,106,0.65), 0 0 70px rgba(204,34,51,0.3);
   }
   .btn-retro:active {
     transform: translate(2px, 2px);
@@ -82,16 +84,17 @@ body::after {
   }
 
   .btn-retro-outline {
-    border: 4px solid #FF775E;
-    box-shadow: 4px 4px 0px #000;
+    border: 4px solid #E8506A;
+    box-shadow: 4px 4px 0px #000, 0 0 20px rgba(232,80,106,0.3), 0 0 40px rgba(204,34,51,0.1);
     background: transparent;
-    color: #FF775E;
+    color: #E8506A;
     font-weight: 700;
     transition: transform 0.05s, box-shadow 0.05s, background 0.15s;
     cursor: pointer;
   }
   .btn-retro-outline:hover {
-    background: rgba(255, 119, 94, 0.1);
+    background: rgba(232, 80, 106, 0.12);
+    box-shadow: 4px 4px 0px #000, 0 0 32px rgba(232,80,106,0.45), 0 0 60px rgba(204,34,51,0.2);
   }
   .btn-retro-outline:active {
     transform: translate(2px, 2px);
@@ -99,21 +102,21 @@ body::after {
   }
 
   .glow-text-coral {
-    text-shadow: 0 0 10px rgba(255,119,94,0.8), 0 0 20px rgba(255,119,94,0.5), 0 0 30px rgba(255,119,94,0.3);
+    text-shadow: 0 0 7px rgba(232,80,106,0.9), 0 0 18px rgba(204,34,51,0.6), 0 0 40px rgba(232,80,106,0.35), 0 0 70px rgba(232,80,106,0.15);
   }
 
   /* legacy aliases */
   .glow-text-red {
-    text-shadow: 0 0 10px rgba(255,119,94,0.8), 0 0 20px rgba(255,119,94,0.5), 0 0 30px rgba(255,119,94,0.3);
+    text-shadow: 0 0 7px rgba(232,80,106,0.9), 0 0 18px rgba(204,34,51,0.6), 0 0 40px rgba(232,80,106,0.35), 0 0 70px rgba(232,80,106,0.15);
   }
   .glow-text-crimson {
-    text-shadow: 0 0 10px rgba(255,119,94,0.8), 0 0 20px rgba(255,119,94,0.5), 0 0 30px rgba(255,119,94,0.3);
+    text-shadow: 0 0 7px rgba(232,80,106,0.9), 0 0 18px rgba(204,34,51,0.6), 0 0 40px rgba(232,80,106,0.35), 0 0 70px rgba(232,80,106,0.15);
   }
 
   /* glass-red → now pixel-based */
   .glass-red {
-    border: 4px solid #FF775E;
-    box-shadow: 4px 4px 0px #000;
+    border: 4px solid #E8506A;
+    box-shadow: 4px 4px 0px #000, 0 0 20px rgba(232,80,106,0.35), 0 0 40px rgba(204,34,51,0.12);
     background: rgba(10, 10, 10, 0.9);
   }
 
@@ -121,14 +124,14 @@ body::after {
     background:
       radial-gradient(at 0% 0%, #0a0a0a 0%, transparent 50%),
       radial-gradient(at 100% 0%, #1A1210 0%, transparent 50%),
-      radial-gradient(at 100% 100%, #FF775E 0%, transparent 50%),
+      radial-gradient(at 100% 100%, #E8506A 0%, transparent 50%),
       radial-gradient(at 0% 100%, #0a0a0a 0%, transparent 50%);
     background-size: 200% 200%;
     animation: mesh-gradient 8s ease-in-out infinite;
   }
 
   .text-electric-blue {
-    color: #FF775E;
+    color: #E8506A;
   }
 
   .bg-deep-space {

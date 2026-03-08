@@ -9,18 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        /* ── Peach palette ── */
-        'peach': '#FF775E',
-        'primary-coral': '#FF775E',
+        /* ── Red-Pink palette ── */
+        'peach': '#E8506A',
+        'primary-coral': '#E8506A',
+        'neon-orange': '#CC2233',
         'dark-base': '#0a0a0a',
-        'retro-cream': '#FFF1E6',
+        'retro-cream': '#F5C6CC',
         /* legacy aliases */
-        'blood-red': '#FF775E',
-        'crimson': '#FF775E',
-        'dark-red': '#CC5F4B',
+        'blood-red': '#E8506A',
+        'crimson': '#E8506A',
+        'dark-red': '#B03050',
         'deep-black': '#0a0a0a',
-        'charcoal': '#1A1210',
-        'electric-blue': '#FF775E',
+        'charcoal': '#1A1012',
+        'electric-blue': '#E8506A',
       },
       fontFamily: {
         pixel: ['var(--font-press-start)', 'monospace'],
@@ -54,12 +55,12 @@ const config: Config = {
       boxShadow: {
         'pixel': '4px 4px 0px #000',
         'pixel-sm': '2px 2px 0px #000',
-        'coral-glow': '0 0 20px rgba(255, 119, 94, 0.5)',
-        'coral-glow-lg': '0 0 40px rgba(255, 119, 94, 0.6)',
+        'coral-glow': '0 0 30px rgba(232, 80, 106, 0.55), 0 0 60px rgba(204, 34, 51, 0.25), 0 0 90px rgba(232, 80, 106, 0.1)',
+        'coral-glow-lg': '0 0 50px rgba(232, 80, 106, 0.65), 0 0 100px rgba(204, 34, 51, 0.3), 0 0 140px rgba(232, 80, 106, 0.12)',
         /* legacy aliases */
-        'red-glow': '0 0 20px rgba(255, 119, 94, 0.5)',
-        'red-glow-lg': '0 0 40px rgba(255, 119, 94, 0.6)',
-        'crimson-glow': '0 0 20px rgba(255, 119, 94, 0.5)',
+        'red-glow': '0 0 30px rgba(232, 80, 106, 0.55), 0 0 60px rgba(204, 34, 51, 0.2)',
+        'red-glow-lg': '0 0 50px rgba(232, 80, 106, 0.65), 0 0 100px rgba(204, 34, 51, 0.25)',
+        'crimson-glow': '0 0 30px rgba(232, 80, 106, 0.55), 0 0 60px rgba(204, 34, 51, 0.2)',
       },
     },
   },

@@ -26,7 +26,7 @@ export default function RetroLoadingBar({
       <motion.p
         animate={{ opacity: [1, 0.3, 1] }}
         transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-        className="font-pixel text-[10px] text-[#FF775E] tracking-[0.25em]"
+        className="font-pixel text-[10px] text-[#E8506A] tracking-[0.25em]"
       >
         {label}
       </motion.p>
@@ -47,7 +47,7 @@ export default function RetroLoadingBar({
             animate={{
               opacity: i < filled ? 1 : 0.15,
               scale: i < filled ? 1 : 0.8,
-              backgroundColor: i < filled ? '#FF775E' : '#2a2220',
+              backgroundColor: i < filled ? '#E8506A' : '#2a2220',
             }}
             transition={{ duration: 0.15, delay: i * 0.02 }}
             className="w-3 h-5"

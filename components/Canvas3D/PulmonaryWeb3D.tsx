@@ -48,11 +48,11 @@ function SacFactOverlay({ fact }: { fact: string | null }) {
           transition={{ type: 'spring', stiffness: 200, damping: 22 }}
           className="fixed bottom-10 right-10 z-[9999] pointer-events-none"
         >
-          <div className="bg-[#0a0a0a]/90 border-2 border-[#FF775E] px-6 py-3 max-w-md">
-            <p className="font-pixel text-[7px] text-[#FF775E] tracking-[0.2em] mb-1">
+          <div className="bg-[#0a0a0a]/90 border-2 border-[#E8506A] px-6 py-3 max-w-md">
+            <p className="font-pixel text-[7px] text-[#E8506A] tracking-[0.2em] mb-1">
               ALVEOLAR SAC
             </p>
-            <p className="font-mono text-xs text-[#FF775E]/80 leading-relaxed">
+            <p className="font-mono text-xs text-[#E8506A]/80 leading-relaxed">
               {fact}
             </p>
           </div>

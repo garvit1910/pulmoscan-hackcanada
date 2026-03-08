@@ -19,9 +19,9 @@ const HiddenQuote = memo(function HiddenQuote({ zoomScale }: HiddenQuoteProps) {
       style={{ opacity, scale }}
       className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
     >
-      <div className="max-w-2xl mx-auto p-8 rounded-2xl bg-black/80 backdrop-blur-md border border-[#FF775E]/20 shadow-coral-glow-lg">
+      <div className="max-w-2xl mx-auto p-8 rounded-2xl bg-black/80 backdrop-blur-md border border-[#E8506A]/20 shadow-coral-glow-lg">
         <blockquote className="text-center">
-          <p className="text-2xl font-mono font-light text-[#FF775E] glow-text-coral leading-relaxed">
+          <p className="text-2xl font-mono font-light text-[#E8506A] glow-text-coral leading-relaxed">
             &ldquo;Pulmonary fibrosis causes irreversible scarring. By the time symptoms
             appear, up to 50% of lung function may already be lost.&rdquo;
           </p>
