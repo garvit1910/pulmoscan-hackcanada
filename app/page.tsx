@@ -1,9 +1,16 @@
 'use client'
 
+import { useState, useEffect, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { motion, useMotionValue } from 'framer-motion'
-import PulmonaryWeb3D from '@/components/Canvas3D/PulmonaryWeb3D'
-import { Activity, BookOpen, FileText, Cpu, Shield, BarChart3 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { BookOpen, FileText, Cpu, Shield, BarChart3, Activity } from 'lucide-react'
+
+/* Dynamic import — skip SSR for Three.js / React Three Fiber */
+const LungScene3D = dynamic(
+  () => import('@/components/Canvas3D/LungScene3D'),
+  { ssr: false, loading: () => null },
+)
 
 const features = [
   {
@@ -29,14 +36,69 @@ const features = [
 ]
 
 export default function Home() {
-  const zoomLevel = useMotionValue(1)
+  const [lungPhase, setLungPhase] = useState<string>('exterior')
+  const isExterior = lungPhase === 'exterior'
+
+  // Scroll-up-at-top dive detection
+  // Only triggers if user is at scroll Y=0 and scrolls UP, and hasn't scrolled
+  // down first (i.e. the page loaded at the top and they immediately scroll up).
+  const hasScrolledDown = useRef(false)
+  const scrollUpAccum = useRef(0)
+  const SCROLL_UP_THRESHOLD = 300
+
+  // Track whether user has ever scrolled down during this exterior phase
+  useEffect(() => {
+    // Always reset on any phase change
+    hasScrolledDown.current = false
+    scrollUpAccum.current = 0
+
+    if (lungPhase !== 'exterior') return
+
+    // Scroll to top when returning to exterior so dive can re-trigger
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+
+    const onScroll = () => {
+      if (window.scrollY > 10) {
+        hasScrolledDown.current = true
+        scrollUpAccum.current = 0
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [lungPhase])
+
+  // Window-level wheel listener: if at top and haven't scrolled down, accumulate scroll-up
+  useEffect(() => {
+    if (lungPhase !== 'exterior') return
+    const onWheel = (e: WheelEvent) => {
+      if (window.scrollY > 5) return
+      if (hasScrolledDown.current) return
+
+      if (e.deltaY < 0) {
+        scrollUpAccum.current += Math.abs(e.deltaY)
+        if (scrollUpAccum.current >= SCROLL_UP_THRESHOLD) {
+          scrollUpAccum.current = 0
+          setLungPhase('diving')
+        }
+      } else {
+        scrollUpAccum.current = 0
+      }
+    }
+    window.addEventListener('wheel', onWheel, { passive: true })
+    return () => window.removeEventListener('wheel', onWheel)
+  }, [lungPhase])
 
   return (
-    <main className="min-h-[200vh] w-full bg-dark-base overflow-x-hidden relative">
-      {/* 3D Background — fixed behind everything */}
-      <div className="fixed inset-0 z-0">
-        <PulmonaryWeb3D zoomLevel={zoomLevel} />
+    <main className="min-h-screen w-full bg-dark-base overflow-x-hidden relative">
+      {/* 3D Lung Background — z-10 to capture wheel, z-30 when inside */}
+      <div
+        className={`fixed inset-0 ${isExterior ? 'z-10' : 'z-30'}`}
+      >
+        <LungScene3D phase={lungPhase} onPhaseChange={setLungPhase} />
       </div>
+
+      {/* Page content — sits above canvas via z-20, fades out when diving */}
+      <div className={`relative z-20 transition-opacity duration-700 ${isExterior ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
 
       {/* ═══════════ HERO SECTION ═══════════ */}
       <section className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4">
@@ -56,7 +118,7 @@ export default function Home() {
           transition={{ delay: 0.4, duration: 0.6 }}
           className="font-mono text-lg md:text-2xl text-retro-cream/70 mt-4 max-w-xl"
         >
-          Advanced Pulmonary Disease Detection using AI
+          Advanced Pulmonary Disease Detection
         </motion.p>
 
         {/* ── Button Group ── */}
@@ -87,7 +149,7 @@ export default function Home() {
           className="absolute bottom-8 left-0 right-0 text-center"
         >
           <p className="font-mono text-sm text-retro-cream/30 animate-pulse-slow">
-            ▼&nbsp; scroll to explore &nbsp;▼
+            ▼ scroll down to explore &nbsp;·&nbsp; ▲ scroll up to dive inside
           </p>
         </motion.div>
       </section>
@@ -97,7 +159,7 @@ export default function Home() {
         <motion.h2
           initial={{ scale: 0.8, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}
-          viewport={{ once: true, margin: '-100px' }}
+          viewport={{ once: false, amount: 0.5 }}
           transition={{ duration: 0.5, ease: [0.6, 0.01, 0.05, 0.95] }}
           className="font-pixel text-xl md:text-2xl text-primary-coral text-center mb-16 glow-text-coral"
         >
@@ -112,7 +174,7 @@ export default function Home() {
                 key={i}
                 initial={{ scale: 0.8, opacity: 0 }}
                 whileInView={{ scale: 1, opacity: 1 }}
-                viewport={{ once: true, margin: '-60px' }}
+                viewport={{ once: false, amount: 0.5 }}
                 transition={{
                   delay: i * 0.1,
                   duration: 0.5,
@@ -144,7 +206,7 @@ export default function Home() {
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}
-          viewport={{ once: true }}
+          viewport={{ once: false, amount: 0.5 }}
           transition={{ duration: 0.5 }}
         >
           <Link href="/scanner" className="btn-retro px-8 py-4 font-pixel text-xs md:text-sm inline-block">
@@ -152,6 +214,7 @@ export default function Home() {
           </Link>
         </motion.div>
       </section>
+      </div>
     </main>
   )
 }

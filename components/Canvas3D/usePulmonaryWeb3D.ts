@@ -4,20 +4,31 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { type MotionValue } from 'framer-motion'
 
 /**
- * usePulmonaryWeb3D — "Two-Layer Volumetric Dive" Canvas Hook
+ * usePulmonaryWeb3D — "Scroll-to-Dive Camera" Canvas Hook
+ *
+ * Architecture:
+ *   Canvas + DiagnosticQuote are position:fixed. The page body is tall
+ *   (min-h-[500vh]) to generate scrollY. scrollY drives cameraZ exclusively —
+ *   the camera translates forward, not the page content.
+ *
+ * Projection:
+ *   z_final = rotatedZ + baseDepth − (scrollY × sensitivity)
+ *   As scrollY ↑ → cameraZ ↑ → z_final ↓ → nodes enlarge & fly past viewer.
  *
  * Two-layer anatomy:
- *   SHELL — Low-density lung-silhouette envelope (0.05 opacity).
- *           Fades out + expands on scroll to reveal internals.
- *   CORE  — Dense alveolar sacs (dual-lobe, 10-15 sacs × 30-50 alveoli).
- *           Become the primary focus as the camera dives in.
+ *   SHELL — Low-density lung-silhouette (0.06 opacity).
+ *           Visible when cameraZ < 500. Fully faded out by cameraZ ≈ 600.
+ *   CORE  — Dense alveolar sacs (dual-lobe). Scale up as camera dives.
  *
- * Scroll drives ONLY camera Z-position + opacity. Nodes are generated
- * once on mount and never re-created. The rAF loop animates rotation;
- * scrollY interpolates depth/focalLength/lobe-spread independently.
+ * FINAL_SCROLL_POINT:
+ *   When cameraZ > FINAL_THRESHOLD, the camera "clips into" the closest sac.
+ *   An overdrive zoom is applied, interior sac-wall rings are drawn around the
+ *   viewport edges, and the sac's fact is force-triggered.
  *
- * Sac-specific facts trigger when a sac's avgScale > 20.
- * PROCESS REAPER: Full cleanup on unmount.
+ * Fact trigger: sac avgScale ∈ (25, 80) and sac on-screen → show fact.
+ *   At FINAL_SCROLL_POINT, fact is force-shown for the target sac.
+ *
+ * PROCESS REAPER: Full cleanup on unmount — rAF + scroll + resize removed.
  */
 
 // ── Sac Facts ─────────────────────────────────────────────────
@@ -51,16 +62,17 @@ const SAC_FACTS: string[] = [
 // ── Configuration ──────────────────────────────────────────────
 const CFG = {
   // Camera
-  baseDepth: 450,
+  baseDepth: 600,
   baseFocalLength: 600,
   vanishPoint: { x: 0, y: 0 },
 
-  // Scroll dive — only camera Z + opacity
-  maxDiveDepth: 800,
-  focalSensitivity: 1.4,
+  // Scroll → cameraZ mapping
+  scrollSensitivity: 0.8,     // cameraZ = scrollY × sensitivity
+  maxCameraZ: 1400,
+  focalBoostPerZ: 0.7,        // fl += cameraZ × this
   lobeSeparationGain: 2.0,
 
-  // Rotation (slow, continuous — decoupled from scroll)
+  // Rotation (slow, continuous — decoupled from dive)
   rotVelX: 0.0008,
   rotVelY: 0.0005,
 
@@ -69,12 +81,14 @@ const CFG = {
   pR: 255, pG: 119, pB: 94,
 
   // ─── Shell (Lung Envelope) ──────────────────────────────
-  shellPointsPerLobe: 80,
-  shellSpreadX: 200,
-  shellSpreadY: 260,
-  shellSpreadZ: 140,
+  shellPointsPerLobe: 90,
+  shellSpreadX: 210,
+  shellSpreadY: 280,
+  shellSpreadZ: 150,
   shellSize: 3,
-  shellOpacity: 0.05,
+  shellOpacity: 0.06,
+  shellFadeStart: 200,        // cameraZ where shell begins fading
+  shellFadeEnd: 600,          // cameraZ where shell is fully gone
 
   // ─── Lobes ─────────────────────────────────────────────
   lobeCount: 2,
@@ -112,7 +126,14 @@ const CFG = {
   particleGlow: 5,
 
   // ─── Sac fact trigger ─────────────────────────────────
-  sacTriggerScale: 20,
+  sacTriggerScale: 25,
+  sacDismissScale: 80,
+
+  // ─── FINAL SCROLL POINT (inside-the-alveoli) ──────────
+  finalThreshold: 1000,       // cameraZ value that triggers "inside" view
+  overdriveGain: 3.0,         // extra zoom multiplier past threshold
+  insideRingCount: 14,        // number of sac-wall rings drawn at edges
+  insideRingOpacity: 0.18,
 }
 
 // ── Types ──────────────────────────────────────────────────────
@@ -162,28 +183,32 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
     destroyedRef.current = false
 
     // ── Canvas sizing ────────────────────────────────────────
+    let cW = 0, cH = 0
     function resize() {
       if (!canvas || destroyedRef.current) return
       const dpr = window.devicePixelRatio || 1
-      canvas.width = window.innerWidth * dpr
-      canvas.height = window.innerHeight * dpr
+      cW = window.innerWidth * dpr
+      cH = window.innerHeight * dpr
+      canvas.width = cW
+      canvas.height = cH
       canvas.style.width = `${window.innerWidth}px`
       canvas.style.height = `${window.innerHeight}px`
-      CFG.vanishPoint.x = canvas.width / 2
-      CFG.vanishPoint.y = canvas.height / 2
+      CFG.vanishPoint.x = cW / 2
+      CFG.vanishPoint.y = cH / 2
     }
     resize()
     window.addEventListener('resize', resize)
 
-    // ── Scroll state (read-only — drives camera, not generation) ────
-    let scrollFraction = 0
+    // ── cameraZ — driven by window.scrollY ───────────────────
+    // The page has enough height to scroll. scrollY × sensitivity → cameraZ.
+    // The scroll moves only the 3D math — canvas stays position:fixed.
+    let cameraZ = 0
     function onScroll() {
       if (destroyedRef.current) return
-      const max = Math.max(document.body.scrollHeight - window.innerHeight, 1)
-      scrollFraction = Math.min(window.scrollY / max, 1)
+      cameraZ = Math.min(window.scrollY * CFG.scrollSensitivity, CFG.maxCameraZ)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
+    onScroll()  // initialise from current scrollY
 
     // ── Helpers ──────────────────────────────────────────────
     const rand = (lo: number, hi: number) => lo + Math.random() * (hi - lo)
@@ -191,7 +216,10 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
     const rgba = (r: number, g: number, b: number, a: number) =>
       `rgba(${r},${g},${b},${Math.max(0, a).toFixed(3)})`
 
-    // ── 3D → 2D with dynamic camera ─────────────────────────
+    // ── 3D → 2D projection ──────────────────────────────────
+    //  z_final = rotatedZ + depth
+    //  where depth = baseDepth − cameraZ (passed as argument)
+    //  As cameraZ ↑, depth ↓, z_final ↓, scale ↑ → nodes enlarge / fly past
     function project(
       x: number, y: number, z: number,
       cosX: number, sinX: number, cosY: number, sinY: number,
@@ -219,17 +247,14 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
 
     // ── 1. Shell (Lung Envelope) ─────────────────────────────
     const shellPoints: ShellPoint[] = []
-
     for (let lobe = 0; lobe < CFG.lobeCount; lobe++) {
       const sign = lobe === 0 ? -1 : 1
       for (let i = 0; i < CFG.shellPointsPerLobe; i++) {
-        // Ellipsoidal distribution for lung silhouette
         const theta = Math.random() * Math.PI * 2
         const phi = Math.acos(2 * Math.random() - 1)
         const rx = CFG.shellSpreadX * (0.7 + Math.random() * 0.3)
         const ry = CFG.shellSpreadY * (0.7 + Math.random() * 0.3)
         const rz = CFG.shellSpreadZ * (0.7 + Math.random() * 0.3)
-
         shellPoints.push({
           baseX: sign * rx * 0.5 + rx * 0.3 * Math.sin(phi) * Math.cos(theta),
           baseY: ry * 0.5 * Math.sin(phi) * Math.sin(theta),
@@ -250,7 +275,6 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
     for (let lobe = 0; lobe < CFG.lobeCount; lobe++) {
       const lobeX = lobe === 0 ? -CFG.lobeOffsetX : CFG.lobeOffsetX
       const sacCount = CFG.sacsPerLobe + Math.floor(rand(-CFG.sacJitter, CFG.sacJitter))
-
       for (let s = 0; s < sacCount; s++) {
         const theta = Math.random() * Math.PI * 2
         const phi = Math.acos(2 * Math.random() - 1)
@@ -261,7 +285,6 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
 
         const sacIdx = sacs.length
         const nodeStart = nodes.length
-
         const count = CFG.alveoliPerSac + Math.floor(rand(-CFG.alveoliJitter, CFG.alveoliJitter))
         for (let a = 0; a < count; a++) {
           const at = Math.random() * Math.PI * 2
@@ -279,7 +302,6 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
         }
         const nodeEnd = nodes.length
 
-        // Intra-sac connections (sparse, short)
         for (let i = nodeStart; i < nodeEnd; i++) {
           for (let j = i + 1; j < nodeEnd; j++) {
             const dx = nodes[i].baseX - nodes[j].baseX
@@ -318,10 +340,11 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
     for (let i = 0; i < nodes.length; i++) sortBuf.push(i)
 
     // ═══════════════════════════════════════════════════════════
-    // ANIMATION LOOP — reads scrollFraction but never re-generates
+    // ANIMATION LOOP — reads cameraZ (from scrollY) each frame
     // ═══════════════════════════════════════════════════════════
     let tick = 0
     let lastFact: string | null = null
+    const margin = 200
 
     function loop() {
       if (!ctx || !canvas || destroyedRef.current) return
@@ -330,26 +353,34 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
       ctx.fillRect(0, 0, canvas.width, canvas.height)
       tick++
 
-      // ── Camera driven by scroll (Z-position only) ─────────
-      const sf = scrollFraction
-      const dive = sf * CFG.maxDiveDepth
-      const depth = CFG.baseDepth - dive
-      const fl = CFG.baseFocalLength + dive * CFG.focalSensitivity
-      const lobeMult = 1 + sf * CFG.lobeSeparationGain
+      // ── Detect FINAL_SCROLL_POINT ──────────────────────────
+      const pastFinal = cameraZ > CFG.finalThreshold
+      const overdriveT = pastFinal
+        ? Math.min((cameraZ - CFG.finalThreshold) / (CFG.maxCameraZ - CFG.finalThreshold), 1)
+        : 0
+      const overdriveMultiplier = 1 + overdriveT * CFG.overdriveGain
+
+      // ── Camera from cameraZ ────────────────────────────────
+      const depth = CFG.baseDepth - cameraZ * overdriveMultiplier
+      const fl = CFG.baseFocalLength + cameraZ * CFG.focalBoostPerZ * overdriveMultiplier
+      const diveFraction = Math.min(cameraZ / CFG.maxCameraZ, 1)
+      const lobeMult = 1 + diveFraction * CFG.lobeSeparationGain
 
       // zoomLevel for dashboard/scanner (non-scrolling pages)
       const currentZoom = zoomLevel.get()
       const zoomExpand = 1 + (currentZoom - 1) * 0.02
 
-      // Rotation — continuous via tick, NOT scroll
+      // Rotation — tick-based, decoupled from dive
       const rotX = tick * CFG.rotVelX
       const rotY = tick * CFG.rotVelY
       const cosX = Math.cos(rotX), sinX = Math.sin(rotX)
       const cosY = Math.cos(rotY), sinY = Math.sin(rotY)
 
-      // ── Shell opacity: fades out as user dives ─────────────
-      const shellAlpha = CFG.shellOpacity * Math.max(0, 1 - sf * 2.5)
-      const shellExpand = 1 + sf * 1.5  // expand on scroll
+      // ── Shell: fades to 0 when cameraZ ∈ [shellFadeStart, shellFadeEnd] ──
+      const shellFade = Math.max(0, Math.min(1,
+        (CFG.shellFadeEnd - cameraZ) / (CFG.shellFadeEnd - CFG.shellFadeStart)))
+      const shellAlpha = CFG.shellOpacity * shellFade
+      const shellExpand = 1 + diveFraction * 1.5
 
       // ── Draw Shell ─────────────────────────────────────────
       if (shellAlpha > 0.002) {
@@ -376,7 +407,7 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
         }
       }
 
-      // ── Project sac nodes (position uses base coords, no re-gen) ──
+      // ── Project sac nodes ──────────────────────────────────
       for (const sac of sacs) {
         const sign = sac.baseCX < 0 ? -1 : 1
         const spreadX = sac.baseCX + (lobeMult - 1) * sign * Math.abs(sac.baseCX) * 0.5
@@ -396,18 +427,42 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
         }
       }
 
-      // ── Sac proximity → fact trigger (scale > 20) ─────────
+      // ── Sac fact logic ─────────────────────────────────────
       let closestFact: string | null = null
       let closestScale = 0
+
+      // If past FINAL_SCROLL_POINT, force-select the sac with largest avgScale
+      // (the one the camera clipped into). Otherwise use normal range check.
       for (const sac of sacs) {
         let total = 0
+        let onScreen = false
         const n = sac.nodeEnd - sac.nodeStart
-        for (let i = sac.nodeStart; i < sac.nodeEnd; i++) total += nodes[i].scale
+        for (let i = sac.nodeStart; i < sac.nodeEnd; i++) {
+          total += nodes[i].scale
+          if (!onScreen) {
+            const nd = nodes[i]
+            if (nd.sx > -margin && nd.sx < cW + margin &&
+                nd.sy > -margin && nd.sy < cH + margin) {
+              onScreen = true
+            }
+          }
+        }
         sac.avgScale = n > 0 ? total / n : 0
 
-        if (sac.avgScale > CFG.sacTriggerScale && sac.avgScale > closestScale) {
-          closestScale = sac.avgScale
-          closestFact = sac.factText
+        if (pastFinal) {
+          // Inside mode — pick the dominant sac regardless of dismiss threshold
+          if (sac.avgScale > closestScale) {
+            closestScale = sac.avgScale
+            closestFact = sac.factText
+          }
+        } else {
+          // Normal dive — sweet-spot range + visibility
+          if (sac.avgScale > CFG.sacTriggerScale &&
+              sac.avgScale < CFG.sacDismissScale &&
+              onScreen && sac.avgScale > closestScale) {
+            closestScale = sac.avgScale
+            closestFact = sac.factText
+          }
         }
       }
       if (closestFact !== lastFact) {
@@ -429,6 +484,8 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
       }
 
       // ── Draw alveoli — depth-sorted, volumetric fill ───────
+      // When inside, alveoli get brighter
+      const alvBrightness = pastFinal ? (1 + overdriveT * 0.6) : 1
       sortBuf.sort((a, b) => nodes[b].sz - nodes[a].sz)
       for (const i of sortBuf) {
         const nd = nodes[i]
@@ -437,7 +494,8 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
         if (r < 0.15) continue
         ctx.beginPath()
         ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2)
-        ctx.fillStyle = rgba(pR, pG, pB, nd.opacity * CFG.alveoliOpacity)
+        ctx.fillStyle = rgba(pR, pG, pB,
+          Math.min(1, nd.opacity * CFG.alveoliOpacity * alvBrightness))
         ctx.fill()
       }
 
@@ -469,6 +527,30 @@ export function usePulmonaryWeb3D(zoomLevel: MotionValue<number>) {
       }
       ctx.shadowBlur = 0
       ctx.shadowColor = 'transparent'
+
+      // ── INSIDE THE ALVEOLI — sac-wall rings at viewport edge ──
+      if (pastFinal && overdriveT > 0) {
+        const cx = cW / 2
+        const cy = cH / 2
+        const maxR = Math.sqrt(cx * cx + cy * cy) * 1.1
+        for (let i = 0; i < CFG.insideRingCount; i++) {
+          const t = i / CFG.insideRingCount
+          const rng = maxR * (0.6 + t * 0.4)
+          const a = CFG.insideRingOpacity * overdriveT * (1 - t * 0.6)
+          ctx.beginPath()
+          ctx.arc(cx, cy, rng, 0, Math.PI * 2)
+          ctx.lineWidth = 2 + t * 4
+          ctx.strokeStyle = rgba(pR, pG, pB, a)
+          ctx.stroke()
+        }
+        // Soft vignette darkening at extreme dive
+        const vigAlpha = overdriveT * 0.3
+        const grad = ctx.createRadialGradient(cx, cy, maxR * 0.2, cx, cy, maxR)
+        grad.addColorStop(0, `rgba(10,10,10,0)`)
+        grad.addColorStop(1, `rgba(10,10,10,${vigAlpha})`)
+        ctx.fillStyle = grad
+        ctx.fillRect(0, 0, cW, cH)
+      }
 
       // ── Fade overlay when zoomLevel > 30 (dashboard/scanner) ──
       if (currentZoom > 30) {

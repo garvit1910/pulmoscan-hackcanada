@@ -3,9 +3,13 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft, Stethoscope, Brain, Activity, Wind, Heart, Microscope } from 'lucide-react'
-import PulmonaryWeb3D from '@/components/Canvas3D/PulmonaryWeb3D'
+import dynamic from 'next/dynamic'
 import Navigation from '@/components/Dashboard/Navigation'
-import { useMotionValue } from 'framer-motion'
+
+const LungScene3D = dynamic(
+  () => import('@/components/Canvas3D/LungScene3D'),
+  { ssr: false, loading: () => null },
+)
 
 const sections = [
   {
@@ -88,13 +92,12 @@ const cardVariants = {
 }
 
 export default function LearnMorePage() {
-  const zoomLevel = useMotionValue(5)
 
   return (
     <div className="min-h-screen w-full bg-dark-base overflow-x-hidden relative">
-      {/* 3D Background */}
-      <div className="absolute inset-0 z-0 opacity-40">
-        <PulmonaryWeb3D zoomLevel={zoomLevel} />
+      {/* 3D Lung Background */}
+      <div className="fixed inset-0 z-0 opacity-20">
+        <LungScene3D decorative decorativeScale={1.2} />
       </div>
 
       {/* Navigation */}

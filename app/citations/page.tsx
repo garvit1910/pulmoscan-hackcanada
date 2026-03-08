@@ -4,10 +4,14 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft, ExternalLink, Database, BookOpen } from 'lucide-react'
-import PulmonaryWeb3D from '@/components/Canvas3D/PulmonaryWeb3D'
+import dynamic from 'next/dynamic'
 import Navigation from '@/components/Dashboard/Navigation'
 import RetroLoadingBar from '@/components/ui/RetroLoadingBar'
-import { useMotionValue } from 'framer-motion'
+
+const LungScene3D = dynamic(
+  () => import('@/components/Canvas3D/LungScene3D'),
+  { ssr: false, loading: () => null },
+)
 
 interface Citation {
   id: number
@@ -97,7 +101,6 @@ const cardVariants = {
 }
 
 export default function CitationsPage() {
-  const zoomLevel = useMotionValue(5)
 
   const [loading, setLoading] = useState(true)
   const [progress, setProgress] = useState(0)
@@ -122,9 +125,9 @@ export default function CitationsPage() {
 
   return (
     <div className="min-h-screen w-full bg-dark-base overflow-x-hidden relative">
-      {/* 3D Background */}
-      <div className="absolute inset-0 z-0 opacity-30">
-        <PulmonaryWeb3D zoomLevel={zoomLevel} />
+      {/* 3D Lung Background */}
+      <div className="fixed inset-0 z-0 opacity-20">
+        <LungScene3D decorative decorativeScale={1.2} />
       </div>
 
       {/* Navigation */}

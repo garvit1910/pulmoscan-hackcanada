@@ -3,7 +3,7 @@ import { MotionValue } from 'framer-motion'
 export interface AlveolusData {
   x: number
   y: number
-  delay: number
+  delay: number   // stagger delay in seconds for pulsation animation
 }
 
 export interface LungZoomProps {

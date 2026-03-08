@@ -46,7 +46,7 @@ function SacFactOverlay({ fact }: { fact: string | null }) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -20, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 22 }}
-          className="fixed bottom-10 right-10 z-[100] pointer-events-none"
+          className="fixed bottom-10 right-10 z-[9999] pointer-events-none"
         >
           <div className="bg-[#0a0a0a]/90 border-2 border-[#FF775E] px-6 py-3 max-w-md">
             <p className="font-pixel text-[7px] text-[#FF775E] tracking-[0.2em] mb-1">

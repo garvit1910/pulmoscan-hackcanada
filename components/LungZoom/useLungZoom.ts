@@ -7,11 +7,13 @@ export function useLungZoom() {
   const zoomScale = useMotionValue(1)
   const [isZoomed, setIsZoomed] = useState(false)
 
-  // ViewBox transitions: full view to 20x zoom into center
-  const viewBoxWidth = useTransform(zoomScale, [1, 20], [800, 40])
+  /* Derive 4 viewBox parameters from the single zoomScale driver.
+     At zoomScale=1:  viewBox = "0 0 800 800"   — full canvas
+     At zoomScale=20: viewBox = "380 380 40 40"  — 40×40 window centered on (400,400) */
+  const viewBoxWidth  = useTransform(zoomScale, [1, 20], [800, 40])
   const viewBoxHeight = useTransform(zoomScale, [1, 20], [800, 40])
-  const viewBoxX = useTransform(zoomScale, [1, 20], [0, 380])
-  const viewBoxY = useTransform(zoomScale, [1, 20], [0, 380])
+  const viewBoxX      = useTransform(zoomScale, [1, 20], [0, 380])
+  const viewBoxY      = useTransform(zoomScale, [1, 20], [0, 380])
 
   const handleZoomIn = useCallback(() => {
     setIsZoomed(true)
@@ -38,13 +40,14 @@ export function useLungZoom() {
   }, [isZoomed, handleZoomIn, handleZoomOut])
 
   return {
+    isZoomed,
     zoomScale,
     viewBoxX,
     viewBoxY,
     viewBoxWidth,
     viewBoxHeight,
-    isZoomed,
-    toggleZoom,
+    handleZoomIn,
     handleZoomOut,
+    toggleZoom,
   }
 }
