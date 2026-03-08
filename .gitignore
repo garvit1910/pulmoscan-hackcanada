@@ -1,1 +1,18 @@
 .venv/
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Dataset (large binary files — download separately)
+data/
+
+# Model checkpoints
+ml/checkpoints/
+
+# Generated outputs
+ml/output/
+
+# macOS
+.DS_Store

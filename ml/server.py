@@ -15,6 +15,8 @@ Environment variables:
     OUTPUT_DIR       — where to write NRRDs/JSON    (default: ml/output)
 """
 
+import asyncio
+import functools
 import glob
 import io
 import json
@@ -45,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 OSIC_DATA_ROOT = os.environ.get(
     "OSIC_DATA_ROOT",
-    os.path.join(os.path.dirname(__file__), "..", "data", "osic"),
+    os.path.join(os.path.dirname(__file__), "..", "data", "osic", "train"),
 )
 OUTPUT_DIR = os.environ.get(
     "OUTPUT_DIR",
@@ -120,7 +122,7 @@ def _pipeline_error_response(exc: Exception, phase: str) -> JSONResponse:
 
 @app.get("/api/health")
 def health():
-    """Health check — returns model load status and CUDA availability."""
+    """Health check — returns model load status and GPU availability."""
     return {
         "status":         "ok",
         "model_loaded":   app.state.model is not None,
@@ -206,12 +208,17 @@ async def analyze(
                 patient_dir = matches[0]
             logger.info("Analyzing OSIC patient: %s → %s", patient_id, patient_dir)
 
-        # --- Run pipeline ---
+        # --- Run pipeline (in thread pool to avoid blocking the event loop) ---
         try:
-            result = run_pipeline(
-                patient_dir=patient_dir,
-                output_dir=OUTPUT_DIR,
-                checkpoint_path=DEFAULT_CHECKPOINT,
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                None,
+                functools.partial(
+                    run_pipeline,
+                    patient_dir=patient_dir,
+                    output_dir=OUTPUT_DIR,
+                    checkpoint_path=DEFAULT_CHECKPOINT,
+                ),
             )
         except DicomLoadError as exc:
             return _pipeline_error_response(exc, "dicom_load")
