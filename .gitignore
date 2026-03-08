@@ -1,34 +1,50 @@
-# dependencies
-/node_modules
-/.pnp
+# ── Node / Next.js ───────────────────────────────────────
+node_modules/
+.pnp
 .pnp.js
 .yarn/install-state.gz
+frontend/.next/
+frontend/out/
+frontend/build/
+coverage/
 
-# testing
-/coverage
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+*.egg
 
-# next.js
-/.next/
-/out/
+# ── ML / Data (large files – do not commit) ─────────────
+data/
+ml/output/*.nrrd
+ml/output/*.json
+ml/checkpoints/*.pth
+demo/
 
-# production
-/build
-
-# misc
+# ── IDE / OS ─────────────────────────────────────────────
 .DS_Store
 *.pem
+.vscode/
+.idea/
 
-# debug
+# ── Debug / Logs ─────────────────────────────────────────
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+ml/train_log.txt
 
-# local env files
+# ── Env files ────────────────────────────────────────────
+.env
 .env*.local
 
-# vercel
+# ── Misc ─────────────────────────────────────────────────
 .vercel
-
-# typescript
 *.tsbuildinfo
 next-env.d.ts
+pulmoscan.egg-info/
