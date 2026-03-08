@@ -1,1 +1,1 @@
-# pulmoscan-hackcanada 3dlung
+# pulmoscan-hackcanada 3Dlung
