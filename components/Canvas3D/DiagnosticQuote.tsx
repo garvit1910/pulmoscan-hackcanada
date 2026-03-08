@@ -43,7 +43,7 @@ export default function DiagnosticQuote({ quoteOpacity, closeFact }: DiagnosticQ
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 360, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 120, damping: 18 }}
-          className="fixed bottom-6 right-6 z-50 max-w-sm pointer-events-auto"
+          className="fixed bottom-10 right-10 z-[100] max-w-sm pointer-events-auto"
         >
           <div className="relative rounded-none overflow-hidden border-4 border-[#FF775E] shadow-pixel bg-[#0a0a0a]/95">
             {/* Peach header bar */}
